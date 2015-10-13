@@ -1,0 +1,16 @@
+*.d
+*.o
+*.so
+*.so.?
+*.a
+*.pc
+config.log
+config.log.old
+config.cache
+config.h
+Makefile.config
+*~
+\#*
+core
+vgcore*
+*.lds
