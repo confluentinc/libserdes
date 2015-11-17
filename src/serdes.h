@@ -15,21 +15,7 @@
  */
 #pragma once
 
-#include <avro.h>
-
-#ifdef _MSC_VER
-/* MSVC Win32 DLL symbol exports */
-#undef SERDES_EXPORT
-#ifdef SERDES_DLL_EXPORTS /* Set when building DLL */
-#define SERDES_EXPORT __declspec(dllexport)
-#else
-#define SERDES_EXPORT __declspec(dllimport)
-#endif
-
-#else
-#define SERDES_EXPORT
-#endif
-
+#include "serdes-common.h"
 
 
 /* Private types, all access through methods */
@@ -79,70 +65,6 @@ SERDES_EXPORT
 const char *serdes_err2str (serdes_err_t err);
 
 
-
-/*******************************************************************************
- *
- * Serializers and deserializers
- *
- ******************************************************************************/
-
-/**
- * Serialize `avro` object into `*payloadp`.
- *
- * If `"serializer.framing"` is configured `schema` is required.
- * If `schema` is non-NULL the written object will be validated according
- * to the schema, if the validation fails SERDES_ERR_SCHEMA_MISMATCH
- * is returned.
- *
- * `payloadp` behaviour:
- *  - If `payloadp` is NULL no serialization is done but the required
- *    size of the payload buffer is returned in `*sizep`.
- *  - If `*payloadp` is NULL a buffer will be malloc(3):ed, it is the
- *    application's responsibility to free(3) this buffer when done with it.
- *  - If `*payloadp` is not NULL `*sizep` must be used to indicate the
- *    size of the `*payloadp` buffer.
- *
- * On success SERDES_ERR_OK is returned and `*payloadp` points to
- * the serialized payload, `*sizep` is set to the byte length of the payload.
- *
- * On error a SERDES_ERR_.. error is returned and a human readable
- * error description is writing to `errstr`.
- */
-serdes_err_t serdes_schema_serialize_avro (serdes_schema_t *schema,
-                                           avro_value_t *avro,
-                                           void **payloadp, size_t *sizep,
-                                           char *errstr, int errstr_size);
-
-/**
- * Deserialize `payload` of `size` bytes using `schema`.
- *
- * On success SERDES_ERR_OK is returned and the decoded Avro object is
- * passed `avro`, the Avro object must be freed with `avro_value_decref()`
- * when the application is done with it.
- *
- * On error a SERDES_ERR_.. error is returned and a human readable
- * error description is written to `errstr`.
- */
-serdes_err_t serdes_schema_deserialize_avro (serdes_schema_t *schema,
-                                             avro_value_t *avro,
-                                             const void *payload, size_t size,
-                                             char *errstr, int errstr_size);
-
-
-/**
- * Deserialize `payload` of `size`.
- *
- * Payload must be framed according the the `framing` configuration property
- * (see `serdes_conf_set()`) to allow lookup and load of the schema.
- *
- * The schema used to is returned in `*schemap` (optional).
- *
- * Same error semantics as `serdes_schema_deserialize_avro()`
- */
-serdes_err_t serdes_deserialize_avro (serdes_t *serdes, avro_value_t *avro,
-                                      serdes_schema_t **schemap,
-                                      const void *payload, size_t size,
-                                      char *errstr, int errstr_size);
 
 
 /*******************************************************************************
@@ -286,12 +208,6 @@ const char *serdes_schema_name (serdes_schema_t *schema);
 SERDES_EXPORT
 const char *serdes_schema_definition (serdes_schema_t *schema);
 
-
-/**
- * Returns the avro_schema_t object for a schema.
- */
-SERDES_EXPORT
-const avro_schema_t serdes_schema_avro (serdes_schema_t *schema);
 
 
 /**

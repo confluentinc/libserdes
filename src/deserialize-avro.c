@@ -15,6 +15,7 @@
  */
 
 #include "serdes_int.h"
+#include "serdes-avro.h"
 
 #include <arpa/inet.h>
 

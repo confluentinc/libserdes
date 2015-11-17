@@ -73,5 +73,5 @@ to the schema registries, all other configuration is optional.
 
  * `schema.registry.url` - comma separated list of schema registry base URLs (no default)
  * `deserializer.framing` - expected framing format when deserializing data: `none` or `cp1` (Confluent Platform framing). (default: `cp1`)
-  * `serializer.framing` - framing format insert when serializing data: `none` or `cp1` (Confluent Platform framing). (default: `cp1`)
- * 'debug` - enable/disable debugging with `all` or `none`. (default: `none`)
+ * `serializer.framing` - framing format inserted when serializing data: `none` or `cp1` (Confluent Platform framing). (default: `cp1`)
+ * `debug` - enable/disable debugging with `all` or `none`. (default: `none`)

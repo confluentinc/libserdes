@@ -26,7 +26,7 @@
 #include <librdkafka/rdkafka.h>
 
 /* Typical include path is <libserdes/serdes.h> */
-#include "../src/serdes.h"
+#include "../src/serdes-avro.h"
 
 static int run = 1;
 static int exit_eof = 0;
