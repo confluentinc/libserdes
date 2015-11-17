@@ -4,10 +4,10 @@ PKGNAME=	libserdes
 LIBNAME=	libserdes
 LIBVER=		1
 
-SRCS_$(ENABLE_AVRO)= serialize-avro.c deserialize-avro.c
-HDRS_$(ENABLE_AVRO)= serdes-avro.h
+SRCS_$(ENABLE_AVRO_C)+= serialize-avro.c deserialize-avro.c schema-avro.c
+HDRS_$(ENABLE_AVRO_C)+= serdes-avro.h
 
-SRCS=		serdes.c rest.c schema-cache.c tinycthread.c \
+SRCS=		serdes.c rest.c schema-cache.c framing.c tinycthread.c \
 		$(SRCS_y)
 
 HDRS=		serdes.h serdes-common.h $(HDRS_y)

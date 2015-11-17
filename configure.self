@@ -10,11 +10,14 @@ mkl_require socket
 
 function checks {
 
-    # required libs
-    mkl_lib_check "libpthread" "" fail CC "-lpthread"
-    mkl_lib_check "libcurl" "" fail CC "-lcurl"
+    # Semi optional libs
+    mkl_lib_check "avro-c" ENABLE_AVRO_C fail CC "-lavro"
+    mkl_lib_check "avro-cpp" ENABLE_AVRO_CPP disable CC "-lavrocpp"
+
+    # Required libs
     mkl_lib_check "jansson" "" fail CC "-ljansson"
-    mkl_lib_check "avro-c" "" fail CC "-lavro"
+    mkl_lib_check "libcurl" "" fail CC "-lcurl"
+    mkl_lib_check "libpthread" "" fail CC "-lpthread"
 
     # Older g++ (<=4.1?) gives invalid warnings for the C++ code.
     mkl_mkvar_append CXXFLAGS CXXFLAGS "-Wno-non-virtual-dtor"

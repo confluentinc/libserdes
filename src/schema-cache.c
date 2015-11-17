@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <ctype.h>
+
 #include <jansson.h>
 
 #include "serdes_int.h"
@@ -35,39 +38,53 @@ static __inline void serdes_schema_mark_used (serdes_schema_t *ss) {
  * Sets the schema's definition
  */
 static void serdes_schema_set_definition (serdes_schema_t *ss,
-                                          const void *definition, int size) {
+                                          const void *definition, int len) {
         if (ss->ss_definition) {
                 free(ss->ss_definition);
                 ss->ss_definition = NULL;
         }
 
         if (definition) {
-                if (size == -1)
-                        size = strlen(definition);
-                ss->ss_definition = malloc(size+1);
-                ss->ss_definition_len = size;
-                memcpy(ss->ss_definition, definition, size);
-                ss->ss_definition[size] = '\0';
+                if (len == -1)
+                        len = strlen(definition);
+                ss->ss_definition = malloc(len+1);
+                ss->ss_definition_len = len;
+                memcpy(ss->ss_definition, definition, len);
+                ss->ss_definition[len] = '\0';
         }
 }
 
 
-void serdes_schema_destroy (serdes_schema_t *ss) {
-        switch (ss->ss_type)
-        {
-        case SERDES_AVRO:
-                if (ss->ss_avro.schema)
-                        avro_schema_decref(ss->ss_avro.schema);
-                break;
-        }
+/**
+ * Destroy schema, sd_lock must be held.
+ */
+void serdes_schema_destroy0 (serdes_schema_t *ss) {
+
+        if (ss->ss_schema_obj)
+                ss->ss_sd->sd_conf.schema_unload_cb(ss, ss->ss_schema_obj,
+                                                    ss->ss_sd->sd_conf.opaque);
 
         serdes_schema_set_definition(ss, NULL, 0);
 
         if (ss->ss_name)
                 free(ss->ss_name);
-        LIST_REMOVE(ss, ss_link);
+
+        if (ss->ss_linked)
+                LIST_REMOVE(ss, ss_link);
+
         mtx_destroy(&ss->ss_lock);
         free(ss);
+}
+
+
+/**
+ * Public API
+ */
+void serdes_schema_destroy (serdes_schema_t *ss) {
+        serdes_t *sd = ss->ss_sd;
+        mtx_lock(&sd->sd_lock);
+        serdes_schema_destroy0(ss);
+        mtx_unlock(&sd->sd_lock);
 }
 
 
@@ -148,12 +165,67 @@ static int serdes_schema_store (serdes_schema_t *ss,
 
 
 /**
- * Loads schema definition from schema registry.
+ * Loads schema definition
  *
  * Returns -1 on failure.
  */
 static int serdes_schema_load (serdes_schema_t *ss,
+                               const char *definition, size_t definition_len,
                                char *errstr, int errstr_size) {
+        serdes_t *sd = ss->ss_sd;
+        char *wrapped = NULL;
+
+        /* Left-trim schema definition */
+        while (definition_len > 0 && isspace(*definition)) {
+                definition++;
+                definition_len--;
+        }
+
+        /* Workaround: avro-c does not support string-based schemas, so we need to
+         *             convert it to an object-based schema.
+         *             https://issues.apache.org/jira/browse/AVRO-1691 */
+        if (definition_len > 0 && *definition == '\"') {
+                wrapped = malloc(strlen("{ \"type\":   }") + definition_len + 1);
+                definition_len = sprintf(wrapped, "{ \"type\": %s }", definition);
+                definition = wrapped;
+        }
+
+        DBG(ss->ss_sd, "SCHEMA_LOAD",
+            "Received schema %s (%d) definition%s: %.*s",
+            ss->ss_name, ss->ss_id, wrapped ? " (wrapped)" : "",
+            (int)definition_len, definition);
+
+        /* Parse schema */
+        ss->ss_schema_obj = sd->sd_conf.schema_load_cb(ss,
+                                                       definition, definition_len,
+                                                       errstr, errstr_size,
+                                                       sd->sd_conf.opaque);
+        if (!ss->ss_schema_obj) {
+                DBG(ss->ss_sd, "SCHEMA_LOAD",
+                    "Schema load of %s failed: %s", ss->ss_name, errstr);
+                if (wrapped)
+                        free(wrapped);
+                return -1;
+        }
+
+        serdes_schema_set_definition(ss, definition, definition_len);
+
+        if (wrapped)
+                free(wrapped);
+
+        return 0;
+}
+
+
+
+
+/**
+ * Fetch schema definition from schema registry.
+ *
+ * Returns -1 on failure.
+ */
+static int serdes_schema_fetch (serdes_schema_t *ss,
+                                char *errstr, int errstr_size) {
         serdes_t *sd = ss->ss_sd;
         rest_response_t *rr;
         json_t *json, *json_schema;
@@ -206,18 +278,6 @@ static int serdes_schema_load (serdes_schema_t *ss,
                 return -1;
         }
 
-        /* Parse schema */
-        if (avro_schema_from_json_length(json_string_value(json_schema),
-                                         json_string_length(json_schema),
-                                         &ss->ss_avro.schema)) {
-                snprintf(errstr, errstr_size,
-                         "Error parsing schema %d: %s", ss->ss_id,
-                         avro_strerror());
-                rest_response_destroy(rr);
-                json_decref(json);
-                return -1;
-        }
-
         if (ss->ss_id == -1) {
                 /* Extract ID from response */
                 json_t *json_id;
@@ -238,14 +298,18 @@ static int serdes_schema_load (serdes_schema_t *ss,
                 ss->ss_id = json_integer_value(json_id);
         }
 
-        serdes_schema_set_definition(ss,
-                                     json_string_value(json_schema),
-                                     json_string_length(json_schema));
+        if (serdes_schema_load(ss,
+                               json_string_value(json_schema),
+                               json_string_length(json_schema),
+                               errstr, errstr_size) == -1) {
+                rest_response_destroy(rr);
+                json_decref(json);
+                return -1;
+        }
 
-        DBG(ss->ss_sd, "SCHEMA_LOAD",
-            "Succesfully loaded schema %s (avro type name %s) id %d: %s\n",
+        DBG(ss->ss_sd, "SCHEMA_FETCH",
+            "Succesfully fetched schema %s id %d: %s",
             ss->ss_name ? ss->ss_name : "(unknown-name)",
-            avro_schema_type_name(ss->ss_avro.schema),
             ss->ss_id, json_string_value(json_schema));
 
         json_decref(json);
@@ -266,7 +330,6 @@ static int serdes_schema_load (serdes_schema_t *ss,
  */
 static serdes_schema_t *serdes_schema_add0 (serdes_t *sd,
                                             const char *name, int id,
-                                            serdes_type_t type,
                                             const void *definition,
                                             int definition_len,
                                             char *errstr, int errstr_size) {
@@ -281,7 +344,6 @@ static serdes_schema_t *serdes_schema_add0 (serdes_t *sd,
 
         ss = calloc(1, sizeof(*ss));
         ss->ss_id = id;
-        ss->ss_type = type;
         ss->ss_sd = sd;
 
         if (name)
@@ -294,29 +356,31 @@ static serdes_schema_t *serdes_schema_add0 (serdes_t *sd,
                         return NULL;
                 }
 
-                serdes_schema_set_definition(ss, definition, definition_len);
+                if (serdes_schema_load(ss, definition, definition_len,
+                                       errstr, errstr_size) == -1) {
+                        serdes_schema_destroy0(ss);
+                        return NULL;
+                }
 
                 if (ss->ss_id == -1) {
-                        if (serdes_schema_store(ss, errstr, errstr_size) == -1){
-                                serdes_schema_set_definition(ss, NULL, 0);
-                                free(ss->ss_name);
-                                free(ss);
+                        if (serdes_schema_store(ss, errstr, errstr_size) == -1) {
+                                serdes_schema_destroy0(ss);
                                 return NULL;
                         }
                 }
 
         } else {
-                /* Load schema from registry, if any. */
-                if (serdes_schema_load(ss, errstr, errstr_size) == -1) {
-                        free(ss);
+                /* Fetch schema from registry, if any. */
+                if (serdes_schema_fetch(ss, errstr, errstr_size) == -1) {
+                        serdes_schema_destroy0(ss);
                         return NULL;
                 }
         }
 
-
         mtx_init(&ss->ss_lock, mtx_plain);
 
         LIST_INSERT_HEAD(&sd->sd_schemas, ss, ss_link);
+        ss->ss_linked = 1;
 
         return ss;
 }
@@ -357,7 +421,6 @@ serdes_schema_find_by_definition (serdes_t *sd,
 }
 
 serdes_schema_t *serdes_schema_add (serdes_t *sd, const char *name, int id,
-                                    serdes_type_t type,
                                     const void *definition, int definition_len,
                                     char *errstr, int errstr_size) {
         serdes_schema_t *ss;
@@ -369,7 +432,7 @@ serdes_schema_t *serdes_schema_add (serdes_t *sd, const char *name, int id,
         if (!(ss = serdes_schema_find_by_definition(sd, definition,
                                                     definition_len,
                                                     0/*no-lock*/)))
-                ss = serdes_schema_add0(sd, name, id, type,
+                ss = serdes_schema_add0(sd, name, id,
                                         definition, definition_len,
                                         errstr, errstr_size);
         mtx_unlock(&sd->sd_lock);
@@ -393,8 +456,7 @@ serdes_schema_t *serdes_schema_get (serdes_t *sd, const char *name, int id,
                 return ss;
         }
 
-
-        ss = serdes_schema_add0(sd, name, id, SERDES_AVRO, NULL, 0,
+        ss = serdes_schema_add0(sd, name, id, NULL, 0,
                                 errstr, errstr_size);
         mtx_unlock(&sd->sd_lock);
 
@@ -415,8 +477,12 @@ const char *serdes_schema_definition (serdes_schema_t *schema) {
         return schema->ss_definition;
 }
 
-const avro_schema_t serdes_schema_avro (serdes_schema_t *schema) {
-        return schema->ss_avro.schema;
+void *serdes_schema_object (serdes_schema_t *schema) {
+        return schema->ss_schema_obj;
+}
+
+serdes_t *serdes_schema_handle (serdes_schema_t *schema) {
+        return schema->ss_sd;
 }
 
 
@@ -433,7 +499,7 @@ int serdes_schemas_purge (serdes_t *serdes, int max_age) {
                 next = LIST_NEXT(next, ss_link);
 
                 if (ss->ss_t_last_used < expiry) {
-                        serdes_schema_destroy(ss);
+                        serdes_schema_destroy0(ss);
                         cnt++;
                 }
         }
@@ -441,3 +507,14 @@ int serdes_schemas_purge (serdes_t *serdes, int max_age) {
 
         return cnt;
 }
+
+
+void serdes_schema_set_opaque (serdes_schema_t *schema, void *opaque) {
+        schema->ss_opaque = opaque;
+}
+
+void *serdes_schema_opaque (serdes_schema_t *schema) {
+        return schema->ss_opaque;
+}
+
+

@@ -24,6 +24,11 @@ This functionality is designed to work in close integration with the
 Kafka consumer or producer, see the [examples](examples) directory for
 integrations with the librdkafka client library.
 
+The serialization defaults to Avro but is completely pluggable through the
+configuration object interface, allowing applications to use libserdes for any
+serialization type.
+
+
 **libserdes** is licensed under Apache License 2.0
 
 ## Features
@@ -35,12 +40,16 @@ integrations with the librdkafka client library.
 
 ## Requirements
 
- * [avro-c](http://avro.apache.org/docs/current/api/c/index.html)
  * [jansson](http://www.digip.org/jansson/)
  * [libcurl](http://curl.haxx.se/)
+ * [avro-c](http://avro.apache.org/docs/current/api/c/index.html)
+ * [avro-cpp](http://avro.apache.org/docs/current/api/cpp/index.html) (for C++ interface)
+
 
 On Debian/Ubuntu based systems:
 `sudo apt-get install libjansson-dev libcurl-gnutls-dev`
+
+
 
 
 ## Build
@@ -50,21 +59,9 @@ On Debian/Ubuntu based systems:
     sudo make install
 
 
-
-## Usage
-
-### Introduction
-
-**libserdes** FIXME
-
- * dual mode, local cache only or full schema registry support
- * CP framing support
- * thread-safe
-
-
 ### Documentation
 
-Full API documentation is available in [serdes.h](src/serdes.h)
+Full API documentation is available in [serdes.h](src/serdes.h) and [serdescpp.h](src/serdescpp.h)
 
 ### Configuration
 

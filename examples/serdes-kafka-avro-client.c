@@ -142,7 +142,7 @@ static void run_producer (rd_kafka_conf_t *rk_conf,
 
         if (schema_def) {
                 schema = serdes_schema_add(serdes,
-                                           schema_name, schema_id, SERDES_AVRO,
+                                           schema_name, schema_id,
                                            schema_def, -1,
                                            errstr, sizeof(errstr));
                 if (!schema)
@@ -188,7 +188,7 @@ static void run_producer (rd_kafka_conf_t *rk_conf,
                 if (!strncmp(buf, "schema: ", 8)) {
                         /* New schema definition */
                         schema = serdes_schema_add(serdes,
-                                                   schema_name, -1, SERDES_AVRO,
+                                                   schema_name, -1,
                                                    buf+8, -1,
                                                    errstr, sizeof(errstr));
                         if (!schema) {
@@ -430,7 +430,12 @@ int main (int argc, char **argv) {
         if (!mode)
                 usage(argv[0]);
 
-        serdes = serdes_new(SERDES_AVRO, sconf);
+        serdes = serdes_new(sconf, errstr, sizeof(errstr));
+        if (!serdes) {
+                fprintf(stderr, "%% Failed to create serdes handle: %s\n",
+                        errstr);
+                exit(1);
+        }
 
         if (schema_name) {
                 if (strspn(schema_name, "0123456789") == strlen(schema_name)) {

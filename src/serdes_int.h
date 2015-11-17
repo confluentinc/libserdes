@@ -61,10 +61,19 @@ struct serdes_conf_s {
         serdes_framing_t   serializer_framing;   /* Serializer framing */
         serdes_framing_t deserializer_framing;   /* Deserializer framing */
 
+        /* Schema load/unload callbacks */
+        void *(*schema_load_cb) (serdes_schema_t *ss,
+                                 const char *definition, size_t definition_len,
+                                 char *errstr, size_t errstr_size,
+                                 void *opaque);
+        void (*schema_unload_cb) (serdes_schema_t *ss, void *schema_obj,
+                                  void *opaque);
+        void *opaque;
+
         /* Log callback */
-        void      (*log_cb) (int level, const char *fac, const char *str,
+        void      (*log_cb) (serdes_t *serdes,
+                             int level, const char *fac, const char *str,
                              void *log_opaque);
-        void       *log_opaque;
 };
 
 
@@ -87,25 +96,44 @@ struct serdes_schema_s {
         LIST_ENTRY(serdes_schema_s) ss_link; /* serdes_t.sd_schemas list */
         int           ss_id;                 /* Schema registry's id of schema*/
         char         *ss_name;               /* Name of schema */
-        serdes_type_t ss_type;               /* Schema type */
 
         char         *ss_definition;         /* Schema definition */
         int           ss_definition_len;     /* Schema definition length */
 
         time_t        ss_t_last_used;        /* Timestamp of last use. */
 
+        void         *ss_schema_obj;         /* Schema object, type depends
+                                              * on configured load_cb */
+
+        int           ss_linked;             /* On sd_schemas list */
         mtx_t         ss_lock;               /* Protects ss_t_last_used */
         serdes_t     *ss_sd;                 /* Back-pointer to serdes_t */
-
-        union {
-                struct {
-                        avro_schema_t schema; /* Parsed Avro schema */
-                } avro;
-        } ss_u;
-#define ss_avro ss_u.avro
+        void         *ss_opaque;             /* Application opaque */
 };
 
 
 
 void serdes_log (serdes_t *sd, int level, const char *fac,
                  const char *fmt, ...);
+
+
+
+
+
+#if ENABLE_AVRO_C
+/**
+ *
+ * schema-avro.c
+ * serialize-avro.c
+ * deserialize-avro.c
+ *
+ */
+
+void *serdes_avro_schema_load_cb (serdes_schema_t *ss,
+                                  const char *definition,
+                                  size_t definition_len,
+                                  char *errstr, size_t errstr_size,
+                                  void *opaque);
+void serdes_avro_schema_unload_cb (serdes_schema_t *ss, void *schema_obj,
+                                   void *opaque);
+#endif

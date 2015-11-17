@@ -17,23 +17,8 @@
 #include "serdes_int.h"
 #include "serdes-avro.h"
 
-#include <arpa/inet.h>
 
 
-/**
- * Write CP1 framing to `payload` which must be of at least size 5.
- * Returns the number of bytes written.
- */
-static size_t write_cp1_framing (int32_t schema_id, char *payload, size_t size){
-        /* Magic byte */
-        payload[0] = 0;
-
-        /* Schema ID */
-        schema_id = htonl(schema_id);
-        memcpy(payload+1, &schema_id, 4);
-
-        return 5;
-}
 
 
 serdes_err_t serdes_schema_serialize_avro (serdes_schema_t *ss,
@@ -44,9 +29,9 @@ serdes_err_t serdes_schema_serialize_avro (serdes_schema_t *ss,
         size_t size;
         avro_writer_t writer;
         int aerr;
-        size_t of;
+        ssize_t of;
 
-        /* Serializzed output size */
+        /* Serialized output size */
         aerr = avro_value_sizeof(avro, &size);
         if (aerr) {
                 snprintf(errstr, errstr_size,
@@ -55,20 +40,7 @@ serdes_err_t serdes_schema_serialize_avro (serdes_schema_t *ss,
                 return SERDES_ERR_SERIALIZER;
         }
 
-        /* Add framing size */
-        switch (ss->ss_sd->sd_conf.serializer_framing)
-        {
-        case SERDES_FRAMING_CP1:
-                if (!ss) {
-                        snprintf(errstr, errstr_size,
-                                 "Framing requires a schema");
-                        return SERDES_ERR_SCHEMA_REQUIRED;
-                }
-                size += 5;
-                break;
-        default:
-                break;
-        }
+        size += serdes_serializer_framing_size(ss->ss_sd);
 
         if (!payloadp) {
                 /* Application is querying for buffer size */
@@ -93,15 +65,15 @@ serdes_err_t serdes_schema_serialize_avro (serdes_schema_t *ss,
                 payload = malloc(size);
         }
 
-        /* Write framing, if any */
-        switch (ss->ss_sd->sd_conf.serializer_framing)
-        {
-        case SERDES_FRAMING_CP1:
-                of = write_cp1_framing(ss->ss_id, payload, size);
-                break;
-        default:
-                break;
+        /* Write framing, if any. */
+        of = serdes_framing_write(ss, payload, size);
+        if (of == -1) {
+                snprintf(errstr, errstr_size, "Not enough space for framing");
+                if (!*payloadp)
+                        free(payload);
+                return SERDES_ERR_BUFFER_SIZE;
         }
+
 
         /* Create Avro serializer */
         writer = avro_writer_memory(payload+of, size-of);
@@ -126,3 +98,4 @@ serdes_err_t serdes_schema_serialize_avro (serdes_schema_t *ss,
 
         return SERDES_ERR_OK;
 }
+

@@ -1,5 +1,3 @@
-#pragma once
-
 /**
  * Copyright 2015 Confluent Inc.
  *

@@ -1,5 +1,4 @@
 LIBNAME=libserdes
-LIBSUBDIRS=	src
 
 CHECK_FILES+=
 
@@ -12,6 +11,11 @@ BUILD_NUMBER ?= 1
 all: mklove-check libs check
 
 include mklove/Makefile.base
+
+LIBSUBDIRS_$(ENABLE_AVRO_CPP) += src-cpp
+LIBSUBDIRS=	src $(LIBSUBDIRS_y)
+
+
 
 libs:
 	@(for d in $(LIBSUBDIRS); do $(MAKE) -C $$d || exit $?; done)

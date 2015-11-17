@@ -69,8 +69,10 @@ static void serdes_conf_copy0 (serdes_conf_t *dst, const serdes_conf_t *src) {
         dst->serializer_framing   = src->serializer_framing;
         dst->deserializer_framing = src->deserializer_framing;
         dst->debug   = src->debug;
+        dst->schema_load_cb = src->schema_load_cb;
+        dst->schema_unload_cb = src->schema_unload_cb;
         dst->log_cb  = src->log_cb;
-        dst->log_opaque = src->log_opaque;
+        dst->opaque = src->opaque;
 }
 
 serdes_conf_t *serdes_conf_copy (const serdes_conf_t *src) {
@@ -132,12 +134,31 @@ serdes_err_t serdes_conf_set (serdes_conf_t *sconf,
         return SERDES_ERR_OK;
 }
 
+
+void serdes_conf_set_schema_load_cb (serdes_conf_t *sconf,
+                                     void *(*load_cb) (serdes_schema_t *schema,
+                                                       const char *definition,
+                                                       size_t definition_len,
+                                                       char *errstr,
+                                                       size_t errstr_size,
+                                                       void *opaque),
+                                     void (*unload_cb) (serdes_schema_t *schema,
+                                                        void *schema_obj,
+                                                        void *opaque)) {
+        sconf->schema_load_cb = load_cb;
+        sconf->schema_unload_cb = unload_cb;
+}
+
+
 void serdes_conf_set_log_cb (serdes_conf_t *sconf,
-                             void (*log_cb) (int level, const char *fac,
-                                             const char *buf, void *log_opaque),
-                             void *log_opaque) {
+                             void (*log_cb) (serdes_t *sd,
+                                             int level, const char *fac,
+                                             const char *buf, void *opaque)) {
         sconf->log_cb     = log_cb;
-        sconf->log_opaque = log_opaque;
+}
+
+void serdes_conf_set_opaque (serdes_conf_t *sconf, void *opaque) {
+        sconf->opaque = opaque;
 }
 
 
@@ -191,7 +212,7 @@ void serdes_log (serdes_t *sd, int level, const char *fac,
         va_end(ap);
 
         if (sd->sd_conf.log_cb)
-                sd->sd_conf.log_cb(level, fac, buf, sd->sd_conf.log_opaque);
+                sd->sd_conf.log_cb(sd, level, fac, buf, sd->sd_conf.opaque);
         else
                 fprintf(stderr, "%% SERDES-%d-%s: %s\n", level, fac, buf);
 }
@@ -209,7 +230,7 @@ void serdes_destroy (serdes_t *sd) {
         free(sd);
 }
 
-serdes_t *serdes_new (serdes_type_t type, serdes_conf_t *conf) {
+serdes_t *serdes_new (serdes_conf_t *conf, char *errstr, size_t errstr_size) {
         serdes_t *sd;
 
         sd = calloc(1, sizeof(*sd));
@@ -221,6 +242,20 @@ serdes_t *serdes_new (serdes_type_t type, serdes_conf_t *conf) {
                 serdes_conf_destroy(conf);
         } else
                 serdes_conf_init(&sd->sd_conf);
+
+        if (!sd->sd_conf.schema_load_cb) {
+#ifndef ENABLE_AVRO_C
+                snprintf(errstr, errstr_size,
+                         "No schema loader configured"
+                         "(serdes_conf_set_schema_load_cb)");
+                serdes_destroy(sd);
+                return NULL;
+#else
+                /* Default schema loader to Avro-C */
+                sd->sd_conf.schema_load_cb   = serdes_avro_schema_load_cb;
+                sd->sd_conf.schema_unload_cb = serdes_avro_schema_unload_cb;
+#endif
+        }
 
         return sd;
 }
