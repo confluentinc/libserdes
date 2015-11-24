@@ -31,12 +31,6 @@ serialization type.
 
 **libserdes** is licensed under Apache License 2.0
 
-## Features
-
- * thread-safe
- * rich error reporting
- * clean simple API
-
 
 ## Requirements
 
@@ -50,8 +44,6 @@ On Debian/Ubuntu based systems:
 `sudo apt-get install libjansson-dev libcurl-gnutls-dev`
 
 
-
-
 ## Build
 
     ./configure
@@ -61,7 +53,7 @@ On Debian/Ubuntu based systems:
 
 ### Documentation
 
-Full API documentation is available in [serdes.h](src/serdes.h) and [serdescpp.h](src/serdescpp.h)
+Full API documentation is available in [serdes.h](src/serdes.h) and [serdescpp.h](src-cpp/serdescpp.h)
 
 ### Configuration
 
