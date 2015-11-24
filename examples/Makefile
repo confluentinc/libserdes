@@ -3,6 +3,8 @@ include ../Makefile.config
 
 EXAMPLES_$(ENABLE_AVRO_C) += serdes-kafka-avro-client
 EXAMPLES_$(ENABLE_AVRO_CPP) += serdes-tool
+EXAMPLES_$(ENABLE_AVRO_CPP) += kafka-serdes-avro-console-consumer
+EXAMPLES_$(ENABLE_AVRO_CPP) += kafka-serdes-avro-console-producer
 EXAMPLES ?= $(EXAMPLES_y)
 
 all: $(EXAMPLES)
@@ -26,6 +28,16 @@ serdes-kafka-avro-client: $(SLIB) serdes-kafka-avro-client.c
 serdes-tool: $(SLIB) $(SLIB_CPP) serdes-tool.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ \
 	-o $@ $(LDFLAGS) $(SLIB_CPP) $(SLIB) $(LIBS)
+
+
+kafka-serdes-avro-console-consumer: $(SLIB) $(SLIB_CPP) kafka-serdes-avro-console-consumer.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ \
+	-o $@ $(LDFLAGS) $(SLIB_CPP) $(SLIB) $(LIBS) -lrdkafka++ -lrdkafka -lrt
+
+kafka-serdes-avro-console-producer: $(SLIB) $(SLIB_CPP) kafka-serdes-avro-console-producer.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ \
+	-o $@ $(LDFLAGS) $(SLIB_CPP) $(SLIB) $(LIBS) -lrdkafka++ -lrdkafka -lrt
+
 
 clean:
 	rm -f $(EXAMPLES)
