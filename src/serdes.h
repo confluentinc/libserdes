@@ -195,7 +195,7 @@ serdes_schema_t *serdes_schema_add (serdes_t *sd, const char *name, int id,
 
 
 /**
- * Returns the schema repository's id.
+ * Returns the schema id.
  */
 SERDES_EXPORT
 int serdes_schema_id (serdes_schema_t *schema);

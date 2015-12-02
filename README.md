@@ -37,7 +37,7 @@ serialization type.
  * [jansson](http://www.digip.org/jansson/)
  * [libcurl](http://curl.haxx.se/)
  * [avro-c](http://avro.apache.org/docs/current/api/c/index.html)
- * [avro-cpp](http://avro.apache.org/docs/current/api/cpp/index.html) (for C++ interface)
+ * [avro-cpp](http://avro.apache.org/docs/current/api/cpp/html/index.html) (for C++ interface)
 
 
 On Debian/Ubuntu based systems:

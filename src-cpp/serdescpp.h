@@ -50,13 +50,6 @@ SERDES_EXPORT
 std::string err2str (Serdes::ErrorCode err);
 
 
-class SERDES_EXPORT Serializer {
-public:
-  // FIXME
-  virtual void serialize () = 0;
-};
-
-
 
 /* Forward declarations */
 class Handle;
@@ -184,7 +177,7 @@ public:
 
 
   /**
-   * Returns the schema repository's id.
+   * Returns the schema id.
    */
   virtual int id () = 0;
 
