@@ -1,4 +1,4 @@
-include ../Makefile.config
+-include ../Makefile.config
 
 PKGNAME=	libserdes
 LIBNAME=	libserdes

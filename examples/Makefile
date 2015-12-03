@@ -1,5 +1,5 @@
 
-include ../Makefile.config
+-include ../Makefile.config
 
 EXAMPLES_$(ENABLE_AVRO_C) += serdes-kafka-avro-client
 EXAMPLES_$(ENABLE_AVRO_CPP) += serdes-tool
