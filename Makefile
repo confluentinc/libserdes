@@ -2,7 +2,9 @@ LIBNAME=libserdes
 
 CHECK_FILES+=
 
-VERSION = $(shell python rpm/get_version.py)
+PACKAGE_NAME?=	libserdes
+VERSION?=	SNAPSHOT
+
 # Jenkins CI integration
 BUILD_NUMBER ?= 1
 
@@ -35,22 +37,13 @@ clean:
 	@$(MAKE) -C examples $@
 	@(for d in $(LIBSUBDIRS); do $(MAKE) -C $$d $@ ; done)
 
-build_prepare: clean
-	mkdir -p SOURCES
-	git archive --format tar --output SOURCES/$(LIBNAME)-$(VERSION).tar HEAD:
+distclean: clean
+	./configure --clean
+	rm -f config.log config.log.old
 
-srpm: clean build_prepare
-	/usr/bin/mock \
-		--define "__version $(VERSION)"\
-		--define "__release $(BUILD_NUMBER)"\
-		--resultdir=. \
-		--buildsrpm \
-		--spec=rpm/$(LIBNAME).spec \
-		--sources=SOURCES
 
-rpm: srpm
-	/usr/bin/mock \
-		--define "__version $(VERSION)"\
-		--define "__release $(BUILD_NUMBER)"\
-		--resultdir=. \
-		--rebuild *.src.rpm
+archive:
+	git archive --prefix=$(PACKAGE_NAME)-$(VERSION)/ \
+		-o $(PACKAGE_NAME)-$(VERSION).tar.gz HEAD
+	git archive --prefix=$(PACKAGE_NAME)-$(VERSION)/ \
+		-o $(PACKAGE_NAME)-$(VERSION).zip HEAD
