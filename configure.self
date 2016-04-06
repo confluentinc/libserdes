@@ -11,8 +11,10 @@ mkl_require socket
 function checks {
 
     # Semi optional libs
-    mkl_lib_check "avro-c" ENABLE_AVRO_C fail CC "-lavro"
-    mkl_lib_check "avro-cpp" ENABLE_AVRO_CPP disable CC "-lavrocpp"
+    mkl_lib_check "avro-c" ENABLE_AVRO_C fail CC "-lavro" \
+		  "#include <avro.h>"
+    mkl_lib_check "avro-cpp" ENABLE_AVRO_CPP disable CXX "-lavrocpp" \
+		  "#include <avro/Generic.hh>"
 
     # Required libs
     mkl_lib_check "jansson" "" fail CC "-ljansson"
