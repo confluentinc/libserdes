@@ -12,7 +12,7 @@ and deserialization with centrally managed schemas.
 
 On the producer side the application only needs to provide the centrally
 managed schema name or id and libserdes will fetch and load the schema from
-the a remote schema registry. The loaded schema will be used for producer side
+the remote schema registry. The loaded schema will be used for producer side
 verification and serialization of Avro objects.
 
 On the consumer side libserdes will automatically extract the schema id
@@ -43,6 +43,7 @@ serialization type.
 On Debian/Ubuntu based systems:
 `sudo apt-get install libjansson-dev libcurl-gnutls-dev`
 
+ **NOTE: The avro libraries needs to be installed manually.**
 
 ## Build
 
