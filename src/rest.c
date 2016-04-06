@@ -98,11 +98,16 @@ static void rest_response_set_result (rest_response_t *rr, int resp_code,
         rr->code = resp_code;
         if (fmt) {
                 int r;
+		va_list ap2;
+
                 va_start(ap, fmt);
-                r = vsnprintf(NULL, 0, fmt, ap);
+		va_copy(ap2, ap);
+                r = vsnprintf(NULL, 0, fmt, ap2);
+		va_end(ap2);
+
                 rr->errstr = malloc(r+1);
-                vsnprintf(rr->errstr, r+1, fmt, ap);
-                va_end(ap);
+                vsnprintf(rr->errstr, r+1, fmt, ap);;
+		va_end(ap);
         }
 }
 
