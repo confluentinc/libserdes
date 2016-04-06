@@ -1,6 +1,6 @@
 # libserdes
 
-Copyright 2015 Confluent Inc.
+Copyright(C) 2015-2016 Confluent Inc.
 
 **libserdes** is a schema-based serializer/deserializer C/C++ library with
 support for [Avro](http://avro.apache.org) and the
