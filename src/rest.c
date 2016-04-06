@@ -311,13 +311,14 @@ static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
                 sprintf(tmpurl, "%s%s", ul->urls[ul->idx], url_path);
                 do_curl_setopt(curl, CURLOPT_URL, tmpurl);
 
+		rest_response_reset(rr);
+
                 /* Perform request */
                 ccode = rest_req_curl(curl, rr);
                 if (ccode == CURLE_OK)
                         break;
 
                 /* Try next */
-                rest_response_reset(rr);
                 ul->idx = (ul->idx + 1) % ul->cnt;
         } while (ul->idx != start_idx);
 
