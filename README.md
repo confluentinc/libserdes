@@ -28,6 +28,7 @@ The serialization defaults to Avro but is completely pluggable through the
 configuration object interface, allowing applications to use libserdes for any
 serialization type.
 
+NOTE: This is a public beta release of libserdes. We welcome feedback and contributions from the community. We don’t recommend using libserdes in production yet; we have not thoroughly tested this software, and may make changes to the API based on feedback.
 
 **libserdes** is licensed under Apache License 2.0
 
