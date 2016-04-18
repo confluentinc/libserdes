@@ -2,6 +2,12 @@
 
 Copyright(C) 2015-2016 Confluent Inc.
 
+ * This software is licensed under the Apache 2.0 license, and is provided
+   for technical preview purposes only.
+ * This software is not intended for production use cases at this time.
+
+---------------------------------------------------------------------------
+
 **libserdes** is a schema-based serializer/deserializer C/C++ library with
 support for [Avro](http://avro.apache.org) and the
 [Confluent Platform Schema Registry](https://github.com/confluentinc/schema-registry).
