@@ -2,9 +2,8 @@
 
 Copyright(C) 2015-2016 Confluent Inc.
 
- * This software is licensed under the Apache 2.0 license, and is provided
-   for technical preview purposes only.
- * This software is not intended for production use cases at this time.
+ * This software is licensed under the Apache 2.0 license, and is provided "as is" for technical preview purposes only.
+ * This software is not a supported component of Confluent Platform and is not intended for production use at this time.
 
 ---------------------------------------------------------------------------
 
