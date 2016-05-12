@@ -1,0 +1,6 @@
+*.log
+files
+libserdes-dev
+libserdes1-dbg
+libserdes1
+tmp
