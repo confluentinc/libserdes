@@ -115,8 +115,7 @@ static int serdes_schema_store (serdes_schema_t *ss,
         /* Encode JSON envelope */
         json = json_object();
         json_object_set_new(json, "schema",
-                            json_stringn(ss->ss_definition,
-                                         ss->ss_definition_len));
+                            json_string(ss->ss_definition));
         enc = json_dumps(json, JSON_COMPACT);
         enc_len = strlen(enc);
 
@@ -300,7 +299,7 @@ static int serdes_schema_fetch (serdes_schema_t *ss,
 
         if (serdes_schema_load(ss,
                                json_string_value(json_schema),
-                               json_string_length(json_schema),
+			       strlen(json_string_value(json_schema)),
                                errstr, errstr_size) == -1) {
                 rest_response_destroy(rr);
                 json_decref(json);
