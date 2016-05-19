@@ -7,5 +7,3 @@ usr/lib/*/libserdes.a
 usr/lib/*/libserdes.so
 usr/lib/*/libserdes++.a
 usr/lib/*/libserdes++.so
-usr/lib/*/pkgconfig/serdes.pc
-usr/lib/*/pkgconfig/serdes++.pc
