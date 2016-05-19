@@ -1,6 +1,6 @@
 *.log
 files
-libserdes-dev
-libserdes1-dbg
-libserdes1
+confluent-libserdes-dev
+confluent-libserdes1-dbg
+confluent-libserdes1
 tmp

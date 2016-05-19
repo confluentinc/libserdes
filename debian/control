@@ -1,4 +1,4 @@
-Source: libserdes
+Source: confluent-libserdes
 Priority: optional
 Maintainer: Magnus Edenhill <magnus@confluent.io>
 Build-Depends: debhelper (>= 9), libcurl4-openssl-dev, libjansson-dev, libavro-c-dev, libavro-cpp-dev, libboost-dev
@@ -8,7 +8,7 @@ Homepage: https://github.com/confluentinc/libserdes
 Vcs-Git: https://github.com/confluentinc/libserdes.git -b debian
 Vcs-Browser: https://github.com/confluentinc/libserdes/tree/debian
 
-Package: libserdes1
+Package: confluent-libserdes1
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -16,7 +16,7 @@ Description: Confluent Schema-registry client library with Avro support
  .
  This package contains the C shared library.
 
-Package: libserdes++1
+Package: confluent-libserdes++1
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -24,11 +24,11 @@ Description: Confluent Schema-registry client library with Avro support
  .
  This package contains the C++ shared library.
 
-Package: libserdes-dev
+Package: confluent-libserdes-dev
 Section: libdevel
 Architecture: any
 Multi-Arch: same
-Depends: libserdes1 (= ${binary:Version}), libserdes++1 (= ${binary:Version}), ${misc:Depends}
+Depends: confluent-libserdes1 (= ${binary:Version}), confluent-libserdes++1 (= ${binary:Version}), ${misc:Depends}
 Description: Confluent Schema-Registry client library with Avro support (development headers)
  .
  This package contains the development headers.
