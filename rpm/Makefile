@@ -1,4 +1,4 @@
-PACKAGE_NAME?=	libserdes
+PACKAGE_NAME?=	confluent-libserdes
 VERSION?=	1.0.0
 
 BUILD_NUMBER?= 1

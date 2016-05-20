@@ -1,4 +1,4 @@
-Name:    libserdes
+Name:    confluent-libserdes
 Version: %{__version}
 Release: %{__release}%{?dist}
 
@@ -6,7 +6,7 @@ Summary: Confluent Schema-registry client library with Avro support
 Group:   Development/Libraries/C and C++
 License: ASL 2.0
 URL:     https://github.com/confluentinc/libserdes
-Source:	 libserdes-%{version}.tar.gz
+Source:	 confluent-libserdes-%{version}.tar.gz
 
 BuildRequires: libcurl-devel jansson-devel avro-c-devel avro-cpp-devel
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
