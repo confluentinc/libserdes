@@ -3,7 +3,6 @@
 Copyright(C) 2015-2016 Confluent Inc.
 
  * This software is licensed under the Apache 2.0 license, and is provided "as is" for technical preview purposes only.
- * This software is not a supported component of Confluent Platform and is not intended for production use at this time.
 
 ---------------------------------------------------------------------------
 
@@ -33,8 +32,6 @@ The serialization defaults to Avro but is completely pluggable through the
 configuration object interface, allowing applications to use libserdes for any
 serialization type.
 
-NOTE: This is a public beta release of libserdes. We welcome feedback and contributions from the community. We don’t recommend using libserdes in production yet; we have not thoroughly tested this software, and may make changes to the API based on feedback.
-
 **libserdes** is licensed under Apache License 2.0
 
 
@@ -49,7 +46,7 @@ NOTE: This is a public beta release of libserdes. We welcome feedback and contri
 On Debian/Ubuntu based systems:
 `sudo apt-get install libjansson-dev libcurl-gnutls-dev`
 
- **NOTE: The avro libraries needs to be installed manually.**
+ **NOTE: The avro libraries needs to be installed manually or through [Confluent's APT and YUM repositories](http://docs.confluent.io/current/installation.html)**
 
 ## Build
 
