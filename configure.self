@@ -25,6 +25,9 @@ function checks {
     # Older g++ (<=4.1?) gives invalid warnings for the C++ code.
     mkl_mkvar_append CXXFLAGS CXXFLAGS "-Wno-non-virtual-dtor"
 
+    # -lrt is needed on linux for clock_gettime: link it if it exists.
+    mkl_lib_check "librt" "" cont CC "-lrt"
+
     # Required on SunOS
     if [[ $MKL_DISTRO == "SunOS" ]]; then
 	mkl_mkvar_append CPPFLAGS CPPFLAGS "-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT -D__EXTENSIONS__"

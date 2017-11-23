@@ -23,7 +23,7 @@ CPPFLAGS := $(subst strict-dwarf,,$(CPPFLAGS))
 
 serdes-kafka-avro-client: $(SLIB) serdes-kafka-avro-client.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) serdes-kafka-avro-client.c \
-	-o $@ $(LDFLAGS) $(SLIB) $(LIBS) -lrdkafka -lrt
+	-o $@ $(LDFLAGS) $(SLIB) $(LIBS) -lrdkafka
 
 serdes-tool: $(SLIB) $(SLIB_CPP) serdes-tool.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ \
@@ -32,11 +32,11 @@ serdes-tool: $(SLIB) $(SLIB_CPP) serdes-tool.cpp
 
 kafka-serdes-avro-console-consumer: $(SLIB) $(SLIB_CPP) kafka-serdes-avro-console-consumer.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ \
-	-o $@ $(LDFLAGS) $(SLIB_CPP) $(SLIB) $(LIBS) -lrdkafka++ -lrdkafka -lrt
+	-o $@ $(LDFLAGS) $(SLIB_CPP) $(SLIB) $(LIBS) -lrdkafka++ -lrdkafka
 
 kafka-serdes-avro-console-producer: $(SLIB) $(SLIB_CPP) kafka-serdes-avro-console-producer.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ \
-	-o $@ $(LDFLAGS) $(SLIB_CPP) $(SLIB) $(LIBS) -lrdkafka++ -lrdkafka -lrt
+	-o $@ $(LDFLAGS) $(SLIB_CPP) $(SLIB) $(LIBS) -lrdkafka++ -lrdkafka
 
 
 clean:
