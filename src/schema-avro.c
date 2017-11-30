@@ -41,5 +41,5 @@ void serdes_avro_schema_unload_cb (serdes_schema_t *ss, void *schema_obj,
 }
 
 const avro_schema_t serdes_schema_avro (serdes_schema_t *ss) {
-    return ss->ss_schema_obj;
+        return ss->ss_schema_obj;
 }
