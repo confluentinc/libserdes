@@ -228,11 +228,11 @@ static void run_producer (rd_kafka_conf_t *rk_conf,
                                              ser_buf, ser_buf_size,
                                              NULL, 0,
                                              NULL) == -1) {
+				rd_kafka_resp_err_t err = rd_kafka_last_error();
                                 fprintf(stderr,
                                         "%% Failed to produce message: %s\n",
-                                       rd_kafka_err2str(
-                                               rd_kafka_errno2err(errno)));
-                                free(ser_buf);
+                                	rd_kafka_err2name(err));
+				free(ser_buf);
                         } else {
                                 if (verbosity >= 3)
                                         fprintf(stderr,
