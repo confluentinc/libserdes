@@ -34,6 +34,7 @@ typedef struct url_list_s {
         int    idx;           /* Next URL to try */
         char  *str;           /* Original string (copy), urls[..] points here */
         int    max_len;       /* Longest URL's length */
+        char  *parsed_url;    /* Replace comma in str with "\0" */
 } url_list_t;
 
 

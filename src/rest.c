@@ -51,7 +51,8 @@ int url_list_parse (url_list_t *ul, const char *urls) {
         ul->max_len = 0;
         ul->urls    = NULL;
 
-        s = ul->str;
+        s = strdup(ul->str);
+        ul->parsed_url = s;
 
         while (*s) {
                 int len;
@@ -59,8 +60,10 @@ int url_list_parse (url_list_t *ul, const char *urls) {
                 while (*s == ' ')
                         s++;
 
-                if ((t = strchr(s, ',')))
+                if ((t = strchr(s, ','))) {
                         *t = '\0';
+                        t++;
+                }
                 else
                         t = s + strlen(s);
 
@@ -77,10 +80,13 @@ int url_list_parse (url_list_t *ul, const char *urls) {
 }
 
 void url_list_clear (url_list_t *ul) {
+
         if (ul->urls)
                 free(ul->urls);
         if (ul->str)
                 free(ul->str);
+        if (ul->parsed_url)
+                free(ul->parsed_url);
 }
 
 
