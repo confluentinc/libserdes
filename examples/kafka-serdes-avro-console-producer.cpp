@@ -85,7 +85,7 @@ static int json2avro (Serdes::Schema *schema, const std::string &json,
 
   /* Input stream from json string */
   std::istringstream iss(json);
-  std::auto_ptr<avro::InputStream> json_is = avro::istreamInputStream(iss);
+  auto json_is = avro::istreamInputStream(iss);
 
   /* JSON decoder */
   avro::DecoderPtr json_decoder = avro::jsonDecoder(*avro_schema);
