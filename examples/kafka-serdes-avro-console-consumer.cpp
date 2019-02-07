@@ -71,7 +71,7 @@ static int avro2json (Serdes::Schema *schema, const avro::GenericDatum *datum,
 
   /* JSON output stream */
   std::ostringstream oss;
-  std::auto_ptr<avro::OutputStream> json_os = avro::ostreamOutputStream(oss);
+  auto json_os = avro::ostreamOutputStream(oss);
 
   try {
     /* Encode Avro datum to JSON */
