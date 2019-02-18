@@ -70,7 +70,7 @@ namespace Serdes {
   };
 
 
-  class HandleImpl : public Handle {
+  class HandleImpl : public virtual Handle {
  public:
     ~HandleImpl () {
       if (sd_)
@@ -159,7 +159,7 @@ namespace Serdes {
   };
 
 
-  class AvroImpl : virtual public Avro, virtual public HandleImpl {
+  class AvroImpl : public Avro, public HandleImpl {
  public:
     ~AvroImpl () { }
 
@@ -172,15 +172,15 @@ namespace Serdes {
                          const void *payload, size_t size, std::string &errstr);
 
     ssize_t serializer_framing_size () const {
-      return dynamic_cast<const HandleImpl*>(this)->serializer_framing_size();
+      return HandleImpl::serializer_framing_size();
     }
 
     ssize_t deserializer_framing_size () const {
-      return dynamic_cast<const HandleImpl*>(this)->deserializer_framing_size();
+      return HandleImpl::deserializer_framing_size();
     }
 
     int schemas_purge (int max_age) {
-      return dynamic_cast<HandleImpl*>(this)->schemas_purge(max_age);
+      return HandleImpl::schemas_purge(max_age);
     }
 
   };
