@@ -59,6 +59,8 @@ class Handle;
  */
 class SERDES_EXPORT LogCb {
 public:
+  virtual ~LogCb () {};
+
   virtual void log_cb (Handle *serdes, int level, const std::string &fac,
                        const std::string &buf) = 0;
 };

@@ -2,8 +2,7 @@
 
 Copyright(C) 2015-2016 Confluent Inc.
 
- * This software is licensed under the Apache 2.0 license, and is provided "as is" for technical preview purposes only.
-
+ * This software is licensed under the Apache 2.0 license.
 ---------------------------------------------------------------------------
 
 **libserdes** is a schema-based serializer/deserializer C/C++ library with
