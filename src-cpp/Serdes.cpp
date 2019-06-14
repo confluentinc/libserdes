@@ -198,8 +198,6 @@ Schema *Schema::add (Handle *handle, const std::string &name, int id,
                     definition.c_str(), definition.length(), errstr);
 }
 
-
-
 Serdes::Avro::~Avro () {
 
 }
