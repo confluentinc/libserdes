@@ -2,6 +2,8 @@
 *.o
 *.so
 *.so.?
+*.dylib
+*.dSYM
 *.a
 *.pc
 config.log
