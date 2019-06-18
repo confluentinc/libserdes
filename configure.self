@@ -11,14 +11,18 @@ mkl_require socket
 function checks {
 
     # Semi optional libs
-    mkl_lib_check "avro-c" ENABLE_AVRO_C fail CC "-lavro" \
+    mkl_meta_set "avroc" "static" "libavro.a"
+    mkl_lib_check --libname=avro-c "avroc" ENABLE_AVRO_C fail CC "-lavro" \
 		  "#include <avro.h>"
     mkl_lib_check "avro-cpp" ENABLE_AVRO_CPP disable CXX "-lavrocpp" ""
+    mkl_meta_set "librdkafka" "static" "librdkafka.a"
     mkl_lib_check "librdkafka" ENABLE_LIBRDKAFKA disable CXX "-lrdkafka++" \
 		  "#include <librdkafka/rdkafkacpp.h>"
 
     # Required libs
+    mkl_meta_set "jansson" "static" "libjansson.a"
     mkl_lib_check "jansson" "" fail CC "-ljansson"
+    mkl_meta_set "libcurl" "static" "libcurl.a"
     mkl_lib_check "libcurl" "" fail CC "-lcurl"
     mkl_lib_check "libpthread" "" fail CC "-lpthread"
 
@@ -29,7 +33,7 @@ function checks {
     mkl_lib_check "librt" "" cont CC "-lrt"
 
     # Required on SunOS
-    if [[ $MKL_DISTRO == "SunOS" ]]; then
+    if [[ $MKL_DISTRO == "sunos" ]]; then
 	mkl_mkvar_append CPPFLAGS CPPFLAGS "-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT -D__EXTENSIONS__"
     fi
 
@@ -37,7 +41,7 @@ function checks {
     # We rely on configure.cc setting up $NM if it exists.
     if mkl_env_check "nm" "" cont "NM" ; then
 	# nm by future mk var
-	if [[ $MKL_DISTRO == "osx" || $MKL_DISTRO == "AIX" ]]; then
+	if [[ $MKL_DISTRO == "osx" || $MKL_DISTRO == "aix" ]]; then
 	    mkl_mkvar_set SYMDUMPER SYMDUMPER '$(NM) -g'
 	else
 	    mkl_mkvar_set SYMDUMPER SYMDUMPER '$(NM) -D'
