@@ -27,11 +27,13 @@ endif
 
 _UNAME_S := $(shell uname -s)
 ifeq ($(_UNAME_S),Darwin)
-	LIBFILENAME=$(LIBNAME).$(LIBVER).dylib
-	LIBFILENAMELINK=$(LIBNAME).dylib
+	LIBFILENAME=$(LIBNAME).$(LIBVER)$(SOLIB_EXT)
+	LIBFILENAMELINK=$(LIBNAME)$(SOLIB_EXT)
+	LDD_PRINT="otool -L"
 else
-	LIBFILENAME=$(LIBNAME).so.$(LIBVER)
-	LIBFILENAMELINK=$(LIBNAME).so
+	LIBFILENAME=$(LIBNAME)$(SOLIB_EXT).$(LIBVER)
+	LIBFILENAMELINK=$(LIBNAME)$(SOLIB_EXT)
+	LDD_PRINT="ldd"
 endif
 
 INSTALL?=		install
@@ -80,7 +82,9 @@ mklove-check:
 	$(CXX) -MD -MP $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 
-lib: $(LIBFILENAME) $(LIBNAME).a $(LIBFILENAMELINK) lib-gen-pkg-config
+lib: $(LIBFILENAME) $(LIBNAME).a $(LIBNAME)-static.a $(LIBFILENAMELINK) lib-gen-pkg-config
+
+$(LIBNAME).lds: #overridable
 
 $(LIBFILENAME): $(OBJS) $(LIBNAME).lds
 	@printf "$(MKL_YELLOW)Creating shared library $@$(MKL_CLR_RESET)\n"
@@ -89,6 +93,35 @@ $(LIBFILENAME): $(OBJS) $(LIBNAME).lds
 $(LIBNAME).a:	$(OBJS)
 	@printf "$(MKL_YELLOW)Creating static library $@$(MKL_CLR_RESET)\n"
 	$(AR) rcs$(ARFLAGS) $@ $(OBJS)
+
+ifeq ($(MKL_NO_SELFCONTAINED_STATIC_LIB),y)
+$(LIBNAME)-static.a:
+else
+$(LIBNAME)-static.a: $(LIBNAME).a
+ifneq ($(MKL_STATIC_LIBS),)
+	@printf "$(MKL_YELLOW)Creating self-contained static library $@$(MKL_CLR_RESET)\n"
+ifeq ($(HAS_LIBTOOL_STATIC),y)
+	$(LIBTOOL) -static -o $@ - $(LIBNAME).a $(MKL_STATIC_LIBS)
+else
+	(_tmp=$$(mktemp arstaticXXXXXX) ; \
+	echo "CREATE $@" > $$_tmp ; \
+	for _f in $(LIBNAME).a $(MKL_STATIC_LIBS) ; do \
+		echo "ADDLIB $$_f" >> $$_tmp ; \
+	done ; \
+	echo "SAVE" >> $$_tmp ; \
+	echo "END" >> $$_tmp ; \
+	cat $$_tmp ; \
+	ar -M < $$_tmp || exit 1 ; \
+	rm $$_tmp)
+endif
+ifneq ($(MKL_DYNAMIC_LIBS),)
+	@printf "$(MKL_RED)WARNING:$(MKL_YELLOW) $@: The following libraries were not available as static libraries and need to be linked dynamically: $(MKL_DYNAMIC_LIBS)$(MKL_CLR_RESET)\n"
+endif
+else
+	@printf "$(MKL_RED)WARNING:$(MKL_YELLOW) $@: Not creating self-contained static library $@: no static libraries available/enabled$(MKL_CLR_RESET)\n"
+endif
+endif
+
 
 $(LIBFILENAMELINK): $(LIBFILENAME)
 	@printf "$(MKL_YELLOW)Creating $@ symlink$(MKL_CLR_RESET)\n"
@@ -107,19 +140,37 @@ Description: $(MKL_APP_DESC_ONELINE)
 Version: $(MKL_APP_VERSION)
 Cflags: -I$${includedir}
 Libs: -L$${libdir} -l$(LIBNAME0)
-Libs.private: $(patsubst -L%,,$(LIBS))
+Libs.private: $(LIBS)
 endef
 
 export _PKG_CONFIG_DEF
 
-$(LIBNAME0).pc: ../Makefile.config
+define _PKG_CONFIG_STATIC_DEF
+prefix=$(prefix)
+libdir=$(libdir)
+includedir=$(includedir)
+
+Name: $(LIBNAME)-static
+Description: $(MKL_APP_DESC_ONELINE) (static)
+Version: $(MKL_APP_VERSION)
+Cflags: -I$${includedir}
+Libs: -L$${libdir} $${libdir}/$(LIBNAME)-static.a $(MKL_DYNAMIC_LIBS)
+endef
+
+export _PKG_CONFIG_STATIC_DEF
+
+$(LIBNAME0).pc: $(TOPDIR)/Makefile.config
 	@printf "$(MKL_YELLOW)Generating pkg-config file $@$(MKL_CLR_RESET)\n"
 	@echo "$$_PKG_CONFIG_DEF" > $@
 
-lib-gen-pkg-config: $(LIBNAME0).pc
+$(LIBNAME0)-static.pc: $(TOPDIR)/Makefile.config $(LIBNAME)-static.a
+	@printf "$(MKL_YELLOW)Generating pkg-config file $@$(MKL_CLR_RESET)\n"
+	@echo "$$_PKG_CONFIG_STATIC_DEF" > $@
+
+lib-gen-pkg-config: $(LIBNAME0).pc $(LIBNAME0)-static.pc
 
 lib-clean-pkg-config:
-	rm -f $(LIBNAME0).pc
+	rm -f $(LIBNAME0).pc $(LIBNAME0)-static.pc
 else
 lib-gen-pkg-config:
 lib-clean-pkg-config:
@@ -145,18 +196,37 @@ file-check:
 	done ; \
 	$$RET
 
+copyright-check:
+	@(_exit=0 ; \
+	  for f in $$(git ls-tree -r --name-only HEAD | \
+			egrep '\.(c|h|cpp|sh|py|pl)$$' ) ; do \
+		if [ -n "$(MKL_COPYRIGHT_SKIP)" ] && echo "$$f" | egrep -q "$(MKL_COPYRIGHT_SKIP)" ; then \
+			continue ; \
+		fi ; \
+		if ! head -40 $$f | grep -qi copyright $$f ; then \
+			echo error: Copyright missing in $$f ; \
+			_exit=1 ; \
+		fi; \
+	done ; \
+	exit $$_exit)
+
 
 lib-install:
 	@printf "$(MKL_YELLOW)Install $(LIBNAME) to $$DESTDIR$(prefix)$(MKL_CLR_RESET)\n"
-	$(INSTALL) -d $$DESTDIR$(includedir)/$(PKGNAME) ; \
-	$(INSTALL) -d $$DESTDIR$(libdir) ; \
-	$(INSTALL) $(HDRS) $$DESTDIR$(includedir)/$(PKGNAME) ; \
-	$(INSTALL) $(LIBNAME).a $$DESTDIR$(libdir) ; \
-	$(INSTALL) $(LIBFILENAME) $$DESTDIR$(libdir) ; \
+	$(INSTALL) -d $$DESTDIR$(includedir)/$(PKGNAME)
+	$(INSTALL) -d $$DESTDIR$(libdir)
+	$(INSTALL) $(HDRS) $$DESTDIR$(includedir)/$(PKGNAME)
+	$(INSTALL) $(LIBNAME).a $$DESTDIR$(libdir)
+	[ ! -f $(LIBNAME)-static.a ] || $(INSTALL) $(LIBNAME)-static.a $$DESTDIR$(libdir)
+	$(INSTALL) $(LIBFILENAME) $$DESTDIR$(libdir)
 	[ -f "$(LIBNAME0).pc" ] && ( \
-		$(INSTALL) -d $$DESTDIR$(pkgconfigdir) ; \
+		$(INSTALL) -d $$DESTDIR$(pkgconfigdir) && \
 		$(INSTALL) -m 0644 $(LIBNAME0).pc $$DESTDIR$(pkgconfigdir) \
-	) ; \
+	)
+	[ -f "$(LIBNAME0)-static.pc" ] && ( \
+		$(INSTALL) -d $$DESTDIR$(pkgconfigdir) && \
+		$(INSTALL) -m 0644 $(LIBNAME0)-static.pc $$DESTDIR$(pkgconfigdir) \
+	)
 	(cd $$DESTDIR$(libdir) && ln -sf $(LIBFILENAME) $(LIBFILENAMELINK))
 
 lib-uninstall:
@@ -164,11 +234,13 @@ lib-uninstall:
 	for hdr in $(HDRS) ; do \
 		rm -f $$DESTDIR$(includedir)/$(PKGNAME)/$$hdr ; done
 	rm -f $$DESTDIR$(libdir)/$(LIBNAME).a
+	rm -f $$DESTDIR$(libdir)/$(LIBNAME)-static.a
 	rm -f $$DESTDIR$(libdir)/$(LIBFILENAME)
 	rm -f $$DESTDIR$(libdir)/$(LIBFILENAMELINK)
 	rmdir $$DESTDIR$(includedir)/$(PKGNAME) || true
-
-
+	rm -f $$DESTDIR$(pkgconfigdir)/$(LIBNAME0).pc
+	rm -f $$DESTDIR$(pkgconfigdir)/$(LIBNAME0)-static.pc
+	rmdir $$DESTDIR$(pkgconfigdir) || true
 
 bin-install:
 	@printf "$(MKL_YELLOW)Install $(BIN) to $$DESTDIR$(prefix)$(MKL_CLR_RESET)\n"
@@ -178,6 +250,7 @@ bin-install:
 bin-uninstall:
 	@printf "$(MKL_YELLOW)Uninstall $(BIN) from $$DESTDIR$(prefix)$(MKL_CLR_RESET)\n"
 	rm -f $$DESTDIR$(bindir)/$(BIN)
+	rmdir $$DESTDIR$(bindir) || true
 
 
 generic-clean:
@@ -189,3 +262,6 @@ lib-clean: generic-clean lib-clean-pkg-config
 
 bin-clean: generic-clean
 	rm -f $(BIN)
+
+deps-clean:
+	rm -rf "$(MKLOVE_DIR)/deps"
