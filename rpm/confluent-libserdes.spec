@@ -8,7 +8,7 @@ License: ASL 2.0
 URL:     https://github.com/confluentinc/libserdes
 Source:	 confluent-libserdes-%{version}.tar.gz
 
-BuildRequires: libcurl-devel jansson-devel avro-c-devel avro-cpp-devel perl
+BuildRequires: libcurl-devel jansson-devel avro-c-devel avro-cpp-devel perl librdkafka-devel
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 %description
