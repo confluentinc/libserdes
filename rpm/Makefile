@@ -7,7 +7,7 @@ MOCK_CONFIG?=default
 
 RESULT_DIR?=pkgs-$(VERSION)-$(BUILD_NUMBER)-$(MOCK_CONFIG)
 
-BUILD_DEPENDS?= avro-c avro-c-devel librdkafka
+BUILD_DEPENDS?= avro-c avro-cpp librdkafka
 
 all: rpm
 
