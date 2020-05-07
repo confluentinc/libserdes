@@ -7,7 +7,7 @@ MOCK_CONFIG?=default
 
 RESULT_DIR?=pkgs-$(VERSION)-$(BUILD_NUMBER)-$(MOCK_CONFIG)
 
-BUILD_DEPENDS?= avro-c avro-c-devel
+BUILD_DEPENDS?= avro-c avro-cpp librdkafka
 
 all: rpm
 
@@ -30,18 +30,20 @@ build_prepare: archive
 # such as avro-c.
 install-deps:
 	@([ -d "$(REPO_DIR)" ] || (echo "REPO_DIR must be set to a path containing $(BUILD_DEPENDS) RPMs" ; exit 1))
-	[ -f $(RESULT_DIR)/state.log ] || /usr/bin/mock -r $(MOCK_CONFIG) \
+	[ -f $(RESULT_DIR)/state.log ] || /usr/bin/mock -r $(MOCK_CONFIG) $(MOCK_OPTIONS) \
 		--resultdir=$(RESULT_DIR) --init
-	$(eval DEP_PKGS := $(shell (for d in $(BUILD_DEPENDS) ; do ls $(REPO_DIR)/$${d}*.rpm | grep -v -E '(debuginfo|\.src\.rpm)' ; done)))
+	$(eval DEP_PKGS := $(shell (for d in $(BUILD_DEPENDS) ; do ls $(REPO_DIR)/$${d}*.rpm | grep -v -E '(debuginfo|debugsource|\.src\.rpm)' ; done | sort -u)))
 	/usr/bin/mock \
+		$(MOCK_OPTIONS) \
 		-r $(MOCK_CONFIG) \
 		--no-clean \
 		--no-cleanup-after \
 		--resultdir=$(RESULT_DIR) \
-		--install $(DEP_PKGS) || true
+		--install $(DEP_PKGS)
 
 srpm: build_prepare
 	/usr/bin/mock \
+		$(MOCK_OPTIONS) \
 		-r $(MOCK_CONFIG) \
 		--no-clean \
 		--no-cleanup-after \
@@ -55,6 +57,7 @@ srpm: build_prepare
 
 rpm: srpm
 	/usr/bin/mock \
+		$(MOCK_OPTIONS) \
 		-r $(MOCK_CONFIG) \
 		--no-clean \
 		--no-cleanup-after \
