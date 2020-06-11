@@ -26,7 +26,6 @@ serdes_err_t serdes_schema_deserialize_avro (serdes_schema_t *ss,
         avro_value_iface_t *iface;
         serdes_err_t err = SERDES_ERR_OK;
         avro_schema_t avro_schema = ss->ss_schema_obj;
-        char *bytes = NULL;
 
         reader = avro_reader_memory(payload, size);
 
@@ -39,17 +38,7 @@ serdes_err_t serdes_schema_deserialize_avro (serdes_schema_t *ss,
         // exists in the Java KafkaAvroDeserializer. Since some users rely on this
         // buggy behaviour already, just work around here as well.
         if (avro_schema->type == AVRO_BYTES) {
-            bytes = (char *) avro_malloc(size);
-            if (!bytes) {
-                snprintf(errstr, errstr_size,
-                        "Failed to alloc buffer for bytes type.");
-                err = SERDES_ERR_PAYLOAD_INVALID;
-            }
-            else {
-                memcpy(bytes, payload, size);
-                avro_value_set_bytes(avro, bytes, size);
-                avro_free(bytes, size);
-            }
+                avro_value_set_bytes(avro, (char *)payload, size);
         }
         else if (avro_value_read(reader, avro) != 0) {
                 snprintf(errstr, errstr_size,
