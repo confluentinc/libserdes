@@ -27,20 +27,21 @@ serdes_err_t serdes_schema_deserialize_avro (serdes_schema_t *ss,
         serdes_err_t err = SERDES_ERR_OK;
         avro_schema_t avro_schema = ss->ss_schema_obj;
 
-        reader = avro_reader_memory(payload, size);
-
         iface = avro_generic_class_from_schema(avro_schema);
         avro_generic_value_new(iface, avro);
 
         // See https://github.com/confluentinc/schema-registry/issues/1411
-        // Java KafkaAvroSerializer won't follow the avro protocol to add the bytes
-        // length when the data only contains a bytes field. And this workaround also
-        // exists in the Java KafkaAvroDeserializer. Since some users rely on this
-        // buggy behaviour already, just work around here as well.
+        // The Java KafkaAvroSerializer treats AVRO_BYTES as a special case, deviating
+        // from the Avro serialization format by omitting to prefix the byte array
+        // with it's length. The same convention is followed here.
         if (avro_schema->type == AVRO_BYTES) {
                 avro_value_set_bytes(avro, (char *)payload, size);
+                avro_value_iface_decref(iface);
+                return err;
         }
-        else if (avro_value_read(reader, avro) != 0) {
+
+        reader = avro_reader_memory(payload, size);
+        if (avro_value_read(reader, avro) != 0) {
                 snprintf(errstr, errstr_size,
                          "Failed to read avro value: %s", avro_strerror());
                 err = SERDES_ERR_PAYLOAD_INVALID;
