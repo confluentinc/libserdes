@@ -159,13 +159,13 @@ Schema *Schema::get (Handle *handle, const std::string &name,
 
 
 
-static Schema *schema_add (Handle *handle, const std::string &name, int id,
+static Schema *schema_add (Handle *handle, const char* name, int id,
                            const void *definition, int definition_len,
                            std::string &errstr) {
   HandleImpl *hnd = dynamic_cast<HandleImpl*>(handle);
   char c_errstr[512];
 
-  serdes_schema_t *c_schema = serdes_schema_add(hnd->sd_, name.c_str(), id,
+  serdes_schema_t *c_schema = serdes_schema_add(hnd->sd_, name, id,
                                                 definition, definition_len,
                                                 c_errstr, sizeof(c_errstr));
   if (!c_schema) {
@@ -187,14 +187,14 @@ Schema *Schema::add (Handle *handle, int id,
 
 Schema *Schema::add (Handle *handle, const std::string &name,
                      const std::string &definition, std::string &errstr) {
-  return schema_add(handle, name, -1,
+  return schema_add(handle, name.c_str(), -1,
                     definition.c_str(), definition.length(), errstr);
 
 }
 Schema *Schema::add (Handle *handle, const std::string &name, int id,
                       const std::string &definition,
                      std::string &errstr) {
-  return schema_add(handle, name, id,
+  return schema_add(handle, name.c_str(), id,
                     definition.c_str(), definition.length(), errstr);
 }
 
