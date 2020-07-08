@@ -158,7 +158,7 @@ public:
    * Add schema definition to the local cache and stores the schema to remote
    * schema registry.
    *
-   * The schema `name` is required, but the `id` is optional.
+   * If the name is not provided, then the definition will be ignored.
    * If `id` is not set then the schema will be stored on the remote schema
    * registry, else the id will be assigned as this schema's id.
    *
