@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <assert.h>
 
 #include <curl/curl.h>
 
@@ -24,6 +25,7 @@
 
 static once_flag rest_global_init_once = ONCE_FLAG_INIT;
 
+static void unittest_url_encode (void);
 
 /**
  * Once-per-runtime init of REST framework
@@ -34,6 +36,9 @@ static void rest_init_cb (void) {
         if (ccode != CURLE_OK)
                 fprintf(stderr, "libserdes: curl_global_init failed: %s\n",
                         curl_easy_strerror(ccode));
+
+        if (0) /* Enable for unittests */
+                unittest_url_encode();
 }
 
 static void rest_init (void) {
@@ -41,8 +46,117 @@ static void rest_init (void) {
 }
 
 
+/**
+ * @brief URL-encode auth portition (if any) of the URL.
+ *
+ * @returns a newly allocated URL.
+ */
+char *url_encode (const char *orig) {
+        const char *s = orig;
+        const char *t1, *t2;
+        const char *proto = "";
+        char *url;
+
+        /* If it seems like the URL has auth fields (user:password@),
+         * URL-encode them separately and rebuild the URL.
+         * This is not completely fool proof since the user:password fields
+         * can contain any character. */
+
+        /* Get past the URL proto, if any. */
+        if (!strncmp(s, "http://", strlen("http://")))
+                proto = "http://";
+        else if (!strncmp(s, "https://", strlen("https://")))
+                proto = "https://";
+
+        s += strlen(proto);
+
+        /* Look for "username:password@.."
+         *          s^       ^t1      ^t2 */
+        if ((t2 = strchr(s, '@')) &&
+            (t1 = strchr(s, ':')) &&
+            t1 < t2) {
+                CURL *curl = curl_easy_init();
+                int user_len = (int)(t1-s);
+                int pass_len = (int)(t2 - (t1+1));
+                char *user = user_len > 0 ?
+                        curl_easy_escape(curl, s, user_len) : "";
+                char *pass = pass_len > 0 ?
+                        curl_easy_escape(curl, t1+1, pass_len) : "";
+                size_t size;
+
+                s = t2+1;
+                size = strlen(proto) + strlen(user) + 1 + strlen(pass) + 1 +
+                        strlen(s) + 1;
+
+                /* Re-construct URL with now escaped auth */
+                url = malloc(size);
+                snprintf(url, size, "%s%s:%s@%s", proto, user, pass, s);
+                if (user_len > 0)
+                        curl_free(user);
+                if (pass_len > 0)
+                        curl_free(pass);
+                curl_easy_cleanup(curl);
+                return url;
+        }
+
+        return strdup(orig);
+}
+
+
+/**
+ * @brief Unittests for url_encode().
+ *
+ * Enable in rest_init_cb() and run any of the example programs
+ * to excercise.
+ */
+static void unittest_url_encode (void) {
+        /* Tuples of input urls and expected output */
+        const char *test[] = {
+                "", "",
+                "http://", "http://",
+                "localhost:1234/", "localhost:1234/",
+
+                "http://aba:laba@domain.com/with/a1",
+                "http://aba:laba@domain.com/with/a1",
+
+                "https://\\cpt:h$dd0ck!@mysite__.com",
+                "https://%5Ccpt:h%24dd0ck%21@mysite__.com",
+
+                ":!@.", ":%21@.",
+
+                "https://:@empty.com", "https://:@empty.com",
+                "https://a:@empty.com", "https://a:@empty.com",
+                "https://:b@empty.com", "https://:b@empty.com",
+                "https://:@", "https://:@",
+
+                NULL, NULL,
+        };
+        int i;
+        int fails = 0;
+
+        for (i = 0 ; test[i] ; i += 2) {
+                const char *input = test[i];
+                const char *exp = test[i+1];
+                char *encoded;
+
+                encoded = url_encode(input);
+                if (strcmp(encoded, exp)) {
+                        fprintf(stderr, "%s: expected %s for %s, not %s\n",
+                                __FUNCTION__, exp, input, encoded);
+                        fails++;
+                }
+
+                free(encoded);
+        }
+
+        assert(!fails);
+
+        fprintf(stderr, "%s PASSED\n", __FUNCTION__);
+}
+
+
 int url_list_parse (url_list_t *ul, const char *urls) {
-        char *s;
+        char *s, *s_orig;
         char *t;
 
         ul->str     = strdup(urls);
@@ -51,8 +165,8 @@ int url_list_parse (url_list_t *ul, const char *urls) {
         ul->max_len = 0;
         ul->urls    = NULL;
 
-        s = strdup(ul->str);
-        ul->parsed_url = s;
+        s_orig = strdup(ul->str);
+        s = s_orig;
 
         while (*s) {
                 int len;
@@ -68,25 +182,30 @@ int url_list_parse (url_list_t *ul, const char *urls) {
                         t = s + strlen(s);
 
                 ul->urls = realloc(ul->urls, sizeof(*ul->urls) * (++(ul->cnt)));
-                ul->urls[ul->cnt-1] = s;
 
-                if ((len = strlen(s)) > ul->max_len)
+                /* URL-encode auth fields, if they exist. */
+                ul->urls[ul->cnt-1] = url_encode(s);
+
+                if ((len = strlen(ul->urls[ul->cnt-1])) > ul->max_len)
                         ul->max_len = len;
 
                 s = t;
         }
 
+        free(s_orig);
+
         return ul->cnt;
 }
 
 void url_list_clear (url_list_t *ul) {
+        int i;
 
+        for (i = 0 ; i < ul->cnt ; i++)
+                free(ul->urls[i]);
         if (ul->urls)
                 free(ul->urls);
         if (ul->str)
                 free(ul->str);
-        if (ul->parsed_url)
-                free(ul->parsed_url);
 }
 
 
