@@ -1,10 +1,10 @@
 
 -include ../Makefile.config
 
-EXAMPLES_$(ENABLE_AVRO_CPP) += serdes-tool
-EXAMPLES_$(ENABLE_AVRO_C)$(ENABLE_LIBRDKAFKA) += serdes-kafka-avro-client
-EXAMPLES_$(ENABLE_AVRO_CPP)$(ENABLE_LIBRDKAFKA) += kafka-serdes-avro-console-consumer
-EXAMPLES_$(ENABLE_AVRO_CPP)$(ENABLE_LIBRDKAFKA) += kafka-serdes-avro-console-producer
+EXAMPLES += serdes-tool
+#EXAMPLES_$(ENABLE_AVRO_C)$(ENABLE_LIBRDKAFKA) += serdes-kafka-avro-client
+#EXAMPLES_$(ENABLE_AVRO_CPP)$(ENABLE_LIBRDKAFKA) += kafka-serdes-avro-console-consumer
+#EXAMPLES_$(ENABLE_AVRO_CPP)$(ENABLE_LIBRDKAFKA) += kafka-serdes-avro-console-producer
 EXAMPLES ?= $(EXAMPLES_y) $(EXAMPLES_yy)
 
 all: $(EXAMPLES)

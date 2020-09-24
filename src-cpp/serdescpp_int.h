@@ -113,15 +113,23 @@ namespace Serdes {
     SchemaImpl (serdes_schema_t *ss): schema_(ss) {}
 
     static Schema *get (Handle *handle, int id, std::string &errstr);
-    static Schema *get (Handle *handle, std::string &name, std::string &errstr);
 
-    static Schema *add (Handle *handle, int id, std::string &definition,
+    static Schema *get (Handle *handle, const std::string &name,
                         std::string &errstr);
-    static Schema *add (Handle *handle, std::string name, std::string &definition,
-                        std::string &errstr);
-    static Schema *add (Handle *handle, int id, std::string name,
-                        std::string &definition, std::string &errstr);
 
+    static Schema *add (Handle *handle, int id,
+                        const std::string &definition, std::string &errstr);
+
+    static Schema *add (Handle *handle,
+                        const std::string &name,
+                        const std::string &type,
+                        const std::string &definition,
+                        std::string &errstr);
+
+    static Schema *add (Handle *handle, const std::string &name, int id,
+                        const std::string &type,
+                        const std::string &definition,
+                        std::string &errstr);
 
     int id () {
       return serdes_schema_id(schema_);
@@ -132,18 +140,28 @@ namespace Serdes {
       return std::string(name ? name : "");
     }
 
+    const std::string type () {
+      const char *type = serdes_schema_type(schema_);
+      return std::string(type ? type : "");
+    }
+
     const std::string definition () {
       const char *def = serdes_schema_definition(schema_);
       return std::string(def ? def : "");
     }
 
-    avro::ValidSchema *object () {
-      return static_cast<avro::ValidSchema*>(serdes_schema_object(schema_));
+    void set_object (void *object) {
+      serdes_schema_set_object(schema_, object);
+    }
+
+    void *object () {
+      return serdes_schema_object(schema_);
     }
 
 
     ssize_t framing_write (std::vector<char> &out) const {
-      ssize_t framing_size = serdes_serializer_framing_size(serdes_schema_handle(schema_));
+      ssize_t framing_size = serdes_serializer_framing_size(
+          serdes_schema_handle(schema_));
       if (framing_size == 0)
         return 0;
 
@@ -156,33 +174,6 @@ namespace Serdes {
     }
 
     serdes_schema_t *schema_;
-  };
-
-
-  class AvroImpl : virtual public Avro, virtual public HandleImpl {
- public:
-    ~AvroImpl () { }
-
-    static Avro *create (const Conf *conf, std::string &errstr);
-
-    ssize_t serialize (Schema *schema, const avro::GenericDatum *datum,
-                       std::vector<char> &out, std::string &errstr);
-
-    ssize_t deserialize (Schema **schemap, avro::GenericDatum **datump,
-                         const void *payload, size_t size, std::string &errstr);
-
-    ssize_t serializer_framing_size () const {
-      return dynamic_cast<const HandleImpl*>(this)->serializer_framing_size();
-    }
-
-    ssize_t deserializer_framing_size () const {
-      return dynamic_cast<const HandleImpl*>(this)->deserializer_framing_size();
-    }
-
-    int schemas_purge (int max_age) {
-      return dynamic_cast<HandleImpl*>(this)->schemas_purge(max_age);
-    }
-
   };
 
 }

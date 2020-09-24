@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2015-2020 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@
  */
 #pragma once
 
-#include <sys/queue.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
 
-#include <avro.h>
+#include <sys/queue.h>
 
 #include "../config.h"
 #include "tinycthread.h"
@@ -61,13 +65,6 @@ struct serdes_conf_s {
         serdes_framing_t   serializer_framing;   /* Serializer framing */
         serdes_framing_t deserializer_framing;   /* Deserializer framing */
 
-        /* Schema load/unload callbacks */
-        void *(*schema_load_cb) (serdes_schema_t *ss,
-                                 const char *definition, size_t definition_len,
-                                 char *errstr, size_t errstr_size,
-                                 void *opaque);
-        void (*schema_unload_cb) (serdes_schema_t *ss, void *schema_obj,
-                                  void *opaque);
         void *opaque;
 
         /* Log callback */
@@ -96,14 +93,16 @@ struct serdes_schema_s {
         LIST_ENTRY(serdes_schema_s) ss_link; /* serdes_t.sd_schemas list */
         int           ss_id;                 /* Schema registry's id of schema*/
         char         *ss_name;               /* Name of schema */
+        char         *ss_type;               /* Schema type in upper-case:
+                                              *  AVRO, JSON, PROTOBUF, .. */
 
         char         *ss_definition;         /* Schema definition */
         int           ss_definition_len;     /* Schema definition length */
 
         time_t        ss_t_last_used;        /* Timestamp of last use. */
 
-        void         *ss_schema_obj;         /* Schema object, type depends
-                                              * on configured load_cb */
+        void         *ss_schema_obj;         /* Schema object as set by
+                                              * application. */
 
         int           ss_linked;             /* On sd_schemas list */
         mtx_t         ss_lock;               /* Protects ss_t_last_used */
@@ -115,25 +114,3 @@ struct serdes_schema_s {
 
 void serdes_log (serdes_t *sd, int level, const char *fac,
                  const char *fmt, ...);
-
-
-
-
-
-#if ENABLE_AVRO_C
-/**
- *
- * schema-avro.c
- * serialize-avro.c
- * deserialize-avro.c
- *
- */
-
-void *serdes_avro_schema_load_cb (serdes_schema_t *ss,
-                                  const char *definition,
-                                  size_t definition_len,
-                                  char *errstr, size_t errstr_size,
-                                  void *opaque);
-void serdes_avro_schema_unload_cb (serdes_schema_t *ss, void *schema_obj,
-                                   void *opaque);
-#endif

@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2015-2020 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 #pragma once
 
 #include <string>
-
-#include <avro/ValidSchema.hh>
-
+#include <vector>
 
 /**
  *
@@ -165,6 +163,9 @@ public:
    * If an existing schema with an identical schema exists in the cache it
    * will be returned instead, else the newly created schema will be returned.
    *
+   * The \p type parameter is the schema type, which is the upper-case
+   * string of "AVRO", "PROTOBUF", or "JSON".
+   *
    * The returned schema will be fully loaded and immediately usable.
    *
    * In case schema parsing or storing fails NULL is returned and a human
@@ -172,9 +173,14 @@ public:
  */
   static Schema *add (Handle *handle, int id,
                       const std::string &definition, std::string &errstr);
-  static Schema *add (Handle *handle, const std::string &name,
-                      const std::string &definition, std::string &errstr);
-  static Schema *add (Handle *handle, const std::string &name, int id,
+  static Schema *add (Handle *handle,
+                      const std::string &name,
+                      const std::string &type,
+                      const std::string &definition,
+                      std::string &errstr);
+  static Schema *add (Handle *handle,
+                      const std::string &name, int id,
+                      const std::string &type,
                       const std::string &definition, std::string &errstr);
 
 
@@ -190,6 +196,9 @@ public:
    */
   virtual const std::string name () = 0;
 
+  /** @returns the schema type ("AVRO", "JSON", "PROTOBUF") */
+  virtual const std::string type () = 0;
+
   /**
    * Returns the schema definition.
    * The returned pointer is only valid until the schema is destroyed.
@@ -197,9 +206,18 @@ public:
   virtual const std::string definition () = 0;
 
   /**
-   * Returns the Avro schema object.
+   * @brief Set schema object. This is a convenience function for the
+   *        application to store a schema-type specific schema object,
+   *        such as the Avro::ValidSchema, with the serdes schema object.
+   *        This object may be retrieved with object() and is never used
+   *        by libserdes itself.
    */
-  virtual avro::ValidSchema *object () = 0;
+  virtual void set_object (void *object) = 0;
+
+  /**
+   * Returns the schema objecta s set by set_object().
+   */
+  virtual void *object () = 0;
 
 
   /**

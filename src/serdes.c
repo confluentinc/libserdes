@@ -16,7 +16,6 @@
 
 #include "serdes_int.h"
 
-#include <stdarg.h>
 
 const char *serdes_err2str (serdes_err_t err) {
         switch (err)
@@ -29,16 +28,10 @@ const char *serdes_err2str (serdes_err_t err) {
                 return "Invalid configuration property value";
         case SERDES_ERR_FRAMING_INVALID:
                 return "Invalid payload framing";
-        case SERDES_ERR_PAYLOAD_INVALID:
-                return "Payload is invalid";
-        case SERDES_ERR_SCHEMA_LOAD:
-                return "Schema load failed";
         case SERDES_ERR_SCHEMA_MISMATCH:
                 return "Object does not match schema";
         case SERDES_ERR_SCHEMA_REQUIRED:
                 return "Schema required to perform operation";
-        case SERDES_ERR_SERIALIZER:
-                return "Serializer failed";
         case SERDES_ERR_BUFFER_SIZE:
                 return "Inadequate buffer size";
         default:
@@ -69,8 +62,6 @@ static void serdes_conf_copy0 (serdes_conf_t *dst, const serdes_conf_t *src) {
         dst->serializer_framing   = src->serializer_framing;
         dst->deserializer_framing = src->deserializer_framing;
         dst->debug   = src->debug;
-        dst->schema_load_cb = src->schema_load_cb;
-        dst->schema_unload_cb = src->schema_unload_cb;
         dst->log_cb  = src->log_cb;
         dst->opaque = src->opaque;
 }
@@ -134,20 +125,6 @@ serdes_err_t serdes_conf_set (serdes_conf_t *sconf,
         return SERDES_ERR_OK;
 }
 
-
-void serdes_conf_set_schema_load_cb (serdes_conf_t *sconf,
-                                     void *(*load_cb) (serdes_schema_t *schema,
-                                                       const char *definition,
-                                                       size_t definition_len,
-                                                       char *errstr,
-                                                       size_t errstr_size,
-                                                       void *opaque),
-                                     void (*unload_cb) (serdes_schema_t *schema,
-                                                        void *schema_obj,
-                                                        void *opaque)) {
-        sconf->schema_load_cb = load_cb;
-        sconf->schema_unload_cb = unload_cb;
-}
 
 
 void serdes_conf_set_log_cb (serdes_conf_t *sconf,
@@ -242,20 +219,6 @@ serdes_t *serdes_new (serdes_conf_t *conf, char *errstr, size_t errstr_size) {
                 serdes_conf_destroy(conf);
         } else
                 serdes_conf_init(&sd->sd_conf);
-
-        if (!sd->sd_conf.schema_load_cb) {
-#ifndef ENABLE_AVRO_C
-                snprintf(errstr, errstr_size,
-                         "No schema loader configured"
-                         "(serdes_conf_set_schema_load_cb)");
-                serdes_destroy(sd);
-                return NULL;
-#else
-                /* Default schema loader to Avro-C */
-                sd->sd_conf.schema_load_cb   = serdes_avro_schema_load_cb;
-                sd->sd_conf.schema_unload_cb = serdes_avro_schema_unload_cb;
-#endif
-        }
 
         return sd;
 }

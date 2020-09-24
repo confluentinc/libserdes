@@ -1,9 +1,9 @@
 PKGNAME=	libserdes
 LIBNAME=	libserdes++
-LIBVER=		1
+LIBVER=		2
 
 CXXSRCS=	Serdes.cpp
-HDRS=		serdescpp.h serdescpp-avro.h
+HDRS=		serdescpp.h
 
 OBJS=		$(CXXSRCS:%.cpp=%.o)
 
@@ -31,7 +31,7 @@ ifeq ($(shell uname -o 2>/dev/null),Cygwin)
 endif
 
 ifeq ($(FWD_LINKING_REQ),y)
-	LIBS := -L../src -lserdes $(LIBS) 
+	LIBS := -L../src -lserdes $(LIBS)
 endif
 
 LIBS += -lstdc++
