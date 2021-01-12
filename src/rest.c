@@ -372,6 +372,7 @@ static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
         int url_path_len;
         va_list ap2;
         const int debug = 0;
+        size_t url_len;
 
         /* Initialize rest, once */
         rest_init();
@@ -433,10 +434,19 @@ static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
         tmpurl = alloca(ul->max_len + 1 + strlen(url_path) + 1);
         start_idx = ul->idx;
         do {
-                sprintf(tmpurl, "%s%s", ul->urls[ul->idx], url_path);
+                /*  Hanld the '/' in url
+                 *  When schema registry url is http://127.0.0.1:8081/,
+                 *  it returns 404 error code. We need to remove the
+                 *  the last redundant '/' in the url.
+                 */
+                url_len = strlen(ul->urls[ul->idx]);
+                if (url_len > 0 && ul->urls[ul->idx][url_len - 1] == '/')
+                    url_len --;
+                snprintf(tmpurl, url_len + 1, "%s", ul->urls[ul->idx]);
+                sprintf(tmpurl + url_len, "%s", url_path);
                 do_curl_setopt(curl, CURLOPT_URL, tmpurl);
 
-		rest_response_reset(rr);
+                rest_response_reset(rr);
 
                 /* Perform request */
                 ccode = rest_req_curl(curl, rr);
