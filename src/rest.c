@@ -433,7 +433,7 @@ static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
         tmpurl = alloca(ul->max_len + 1 + strlen(url_path) + 1);
         start_idx = ul->idx;
         do {
-                /*  Hanld the '/' in url
+                /*  Handle the '/' in url
                  *  When schema registry url is http://127.0.0.1:8081/,
                  *  it returns 404 error code. We need to remove the
                  *  the last redundant '/' in the url.
