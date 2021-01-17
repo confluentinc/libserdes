@@ -10,12 +10,11 @@ BUILD_NUMBER ?= 1
 
 .PHONY:
 
-all: mklove-check libs check
+all: mklove-check libs check TAGS
 
 include mklove/Makefile.base
 
-LIBSUBDIRS_$(ENABLE_AVRO_CPP) += src-cpp
-LIBSUBDIRS=	src $(LIBSUBDIRS_y)
+LIBSUBDIRS=	src src-cpp
 
 
 
@@ -47,3 +46,16 @@ archive:
 		-o $(PACKAGE_NAME)-$(VERSION).tar.gz HEAD
 	git archive --prefix=$(PACKAGE_NAME)-$(VERSION)/ \
 		-o $(PACKAGE_NAME)-$(VERSION).zip HEAD
+
+TAGS: .PHONY
+	@(if which etags >/dev/null 2>&1 ; then \
+		echo "Using etags to generate $@" ; \
+		git ls-tree -r --name-only HEAD | egrep '\.(c|cpp|h)$$' | \
+			etags -f $@.tmp - ; \
+		cmp $@ $@.tmp || mv $@.tmp $@ ; rm -f $@.tmp ; \
+	 elif which ctags >/dev/null 2>&1 ; then \
+		echo "Using ctags to generate $@" ; \
+		git ls-tree -r --name-only HEAD | egrep '\.(c|cpp|h)$$' | \
+			ctags -e -f $@.tmp -L- ; \
+		cmp $@ $@.tmp || mv $@.tmp $@ ; rm -f $@.tmp ; \
+	fi)

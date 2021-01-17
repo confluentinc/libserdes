@@ -2,10 +2,7 @@
 
 PKGNAME=	libserdes
 LIBNAME=	libserdes
-LIBVER=		1
-
-SRCS_$(ENABLE_AVRO_C)+= serialize-avro.c deserialize-avro.c schema-avro.c
-HDRS_$(ENABLE_AVRO_C)+= serdes-avro.h
+LIBVER=		2
 
 SRCS=		serdes.c rest.c schema-cache.c framing.c tinycthread.c \
 		$(SRCS_y)
@@ -43,6 +40,6 @@ endif
 
 $(LIBNAME).lds: $(HDRS)
 	@(printf "$(MKL_YELLOW)Generating linker script $@ from $(HDRS)$(MKL_CLR_RESET)\n" ; \
-	  cat $(HDRS) | ../lds-gen.pl > $@)
+	  cat $(HDRS) | ../lds-gen.py > $@)
 
 -include $(DEPS)

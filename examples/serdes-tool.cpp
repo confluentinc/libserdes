@@ -26,8 +26,6 @@
 #include <getopt.h>
 #include <signal.h>
 
-#include <avro/Decoder.hh>
-
 /* Typical include path is <libserdes/serdescpp.h> */
 #include "../src-cpp/serdescpp.h"
 
@@ -56,6 +54,7 @@ static void usage (const std::string &me) {
       "Options:\n"
       " -r <schreg-urls>  Schema registry URL\n"
       " -s <schema-name>  Schema/subject name\n"
+      " -t <schema-type>  Schema type: AVRO, PROTOBUF, JSON\n"
       " -S <schema-def>   Schema definition (JSON)\n"
       " -j <json blob>    JSON blob to encode or decode\n"
       " -X <n>=<v>        Set Serdes configuration\n"
@@ -79,21 +78,7 @@ static void usage (const std::string &me) {
  * Read JSON from stdin, using the provided schema.
  */
 static void decode_json (Serdes::Schema *schema, const std::string &json_str) {
-
-  avro::DecoderPtr decoder;
-
-  decoder = avro::jsonDecoder(*static_cast<avro::ValidSchema*>(schema->object()));
-
-  std::auto_ptr<avro::InputStream> istream =
-      avro::memoryInputStream((const uint8_t *)json_str.c_str(), json_str.size());
-
-  decoder->init(*istream);
-  try {
-    std::string s = decoder->decodeString();
-    std::cout << "Read: " << s << std::endl;
-  } catch (const avro::Exception &e) {
-    FATAL("Decode failed: " << e.what());
-  }
+  FATAL("Decode failed: unsupported");
 }
 
 
@@ -106,7 +91,7 @@ int main (int argc, char **argv) {
   serdes_err_t err;
   int opt;
   int schema_id = -1;
-  std::string schema_name, schema_def, json_blob;
+  std::string schema_name, schema_type, schema_def, json_blob;
   std::string errstr;
   Serdes::Schema *schema;
 
@@ -132,7 +117,7 @@ int main (int argc, char **argv) {
   ExampleLogCb LogCb;
   sconf->set(&LogCb);
 
-  while ((opt = getopt(argc, argv, "r:s:S:j:X:vq")) != -1) {
+  while ((opt = getopt(argc, argv, "r:s:t:S:j:X:vq")) != -1) {
     switch (opt)
     {
       case 'r':
@@ -143,6 +128,9 @@ int main (int argc, char **argv) {
       case 's':
         schema_name = optarg;
         break;
+
+      case 't':
+       schema_type = optarg;
 
       case 'S':
         schema_def = optarg;
@@ -217,7 +205,8 @@ int main (int argc, char **argv) {
       FATAL("Failed to get schema: " << errstr);
 
     std::cout << "Schema \"" << schema->name() << "\" id " << schema->id() <<
-        ": " << schema->definition() << std::endl;
+      " and type " << schema->type() <<
+      ": " << schema->definition() << std::endl;
 
 
     if (!json_blob.empty())
@@ -227,17 +216,20 @@ int main (int argc, char **argv) {
   } else {
     /* Register new schema */
 
-    std::cout << "Register new schema: " << schema_name << ": "
-              << schema_def << std::endl;
+    if (schema_type.empty())
+      FATAL("Schema type -t .. required");
 
-    schema = Serdes::Schema::add(serdes, schema_name,
+    std::cout << "Register new schema: " << schema_name <<
+      " with type " << schema_type << ": " << schema_def << std::endl;
+
+    schema = Serdes::Schema::add(serdes, schema_name, schema_type,
                                  schema_def, errstr);
 
     if (!schema)
       FATAL("Failed to register schema " << schema_name << ": " << errstr);
 
     std::cout << "Registered schema " << schema->name() << " with id "
-              << schema->id() << std::endl;
+              << schema->id() << " and type " << schema->type() << std::endl;
 
   }
 

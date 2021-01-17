@@ -1,6 +1,6 @@
 # libserdes
 
-Copyright(C) 2015-2016 Confluent Inc.
+Copyright(C) 2015-2020 Confluent Inc.
 
  * This software is licensed under the Apache 2.0 license.
 ---------------------------------------------------------------------------
@@ -38,14 +38,10 @@ serialization type.
 
  * [jansson](http://www.digip.org/jansson/)
  * [libcurl](http://curl.haxx.se/)
- * [avro-c](http://avro.apache.org/docs/current/api/c/index.html)  ([download](http://apache.mirrors.spacedump.net/avro/stable/c))
- * [avro-cpp](http://avro.apache.org/docs/current/api/cpp/html/index.html) (for C++ interface)  ([download](http://apache.mirrors.spacedump.net/avro/stable/cpp))
-
 
 On Debian/Ubuntu based systems:
 `sudo apt-get install libjansson-dev libcurl-gnutls-dev`
 
- **NOTE: The avro libraries needs to be installed manually or through [Confluent's APT and YUM repositories](http://docs.confluent.io/current/installation.html)**
 
 ## Build
 
