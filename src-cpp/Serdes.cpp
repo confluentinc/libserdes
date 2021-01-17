@@ -218,13 +218,12 @@ Avro *Avro::create (const Conf *conf, std::string &errstr) {
 
 ssize_t AvroImpl::serialize (Schema *schema, const avro::GenericDatum *datum,
                              std::vector<char> &out, std::string &errstr) {
-  avro::ValidSchema *avro_schema = schema->object();
+  auto avro_schema = schema->object();
 
   /* Binary encoded output stream */
-  std::auto_ptr<avro::OutputStream> bin_os = avro::memoryOutputStream();
+  auto bin_os = avro::memoryOutputStream();
   /* Avro binary encoder */
-  avro::EncoderPtr bin_encoder = avro::validatingEncoder(*avro_schema,
-                                                         avro::binaryEncoder());
+  auto bin_encoder = avro::validatingEncoder(*avro_schema, avro::binaryEncoder());
 
   try {
     /* Encode Avro datum to Avro binary format */
@@ -238,19 +237,16 @@ ssize_t AvroImpl::serialize (Schema *schema, const avro::GenericDatum *datum,
   }
 
   /* Extract written bytes. */
-  boost::shared_ptr<std::vector<uint8_t> > v;
-  v = avro::snapshot(*bin_os.get());
+  auto encoded = avro::snapshot(*bin_os.get());
 
   /* Write framing */
   schema->framing_write(out);
 
   /* Write binary encoded Avro to output vector */
-  out.insert(out.end(), v->begin(), v->end());
-
+  out.insert(out.end(), encoded->cbegin(), encoded->cend());
 
   return out.size();
 }
-
 
 
 ssize_t AvroImpl::deserialize (Schema **schemap, avro::GenericDatum **datump,
@@ -281,8 +277,7 @@ ssize_t AvroImpl::deserialize (Schema **schemap, avro::GenericDatum **datump,
   avro::ValidSchema *avro_schema = schema->object();
 
   /* Binary input stream */
-  std::auto_ptr<avro::InputStream> bin_is =
-      avro::memoryInputStream((const uint8_t *)payload, size);
+  auto bin_is = avro::memoryInputStream((const uint8_t *)payload, size);
 
   /* Binary Avro decoder */
   avro::DecoderPtr bin_decoder = avro::validatingDecoder(*avro_schema,
