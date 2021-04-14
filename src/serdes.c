@@ -17,6 +17,7 @@
 #include "serdes_int.h"
 
 #include <stdarg.h>
+#include <curl/curl.h>
 
 const char *serdes_err2str (serdes_err_t err) {
         switch (err)
@@ -49,6 +50,12 @@ const char *serdes_err2str (serdes_err_t err) {
 
 static void serdes_conf_destroy0 (serdes_conf_t *sconf) {
         url_list_clear(&sconf->schema_registry_urls);
+        if (sconf->schema_security_info.ca_path)
+                free(sconf->schema_security_info.ca_path);
+        if (sconf->schema_security_info.cert_path)
+                free(sconf->schema_security_info.cert_path);
+        if (sconf->schema_security_info.key_path)
+                free(sconf->schema_security_info.key_path);
 }
 
 void serdes_conf_destroy (serdes_conf_t *sconf) {
@@ -73,6 +80,24 @@ static void serdes_conf_copy0 (serdes_conf_t *dst, const serdes_conf_t *src) {
         dst->schema_unload_cb = src->schema_unload_cb;
         dst->log_cb  = src->log_cb;
         dst->opaque = src->opaque;
+
+        security_info_t *dst_info = &dst->schema_security_info;
+        const security_info_t *src_info = &src->schema_security_info;
+        if (dst_info->ca_path) {
+                free(dst_info->ca_path);
+        }
+        dst_info->ca_path = src_info->ca_path ?
+            strdup(src_info->ca_path) : NULL;
+        if (dst_info->cert_path) {
+                free(dst_info->cert_path);
+        }
+        dst_info->cert_path = src_info->cert_path ?
+            strdup(src_info->cert_path) : NULL;
+        if (dst_info->key_path) {
+                free(dst_info->key_path);
+        }
+        dst_info->key_path = src_info->key_path ?
+            strdup(src_info->key_path) : NULL;
 }
 
 serdes_conf_t *serdes_conf_copy (const serdes_conf_t *src) {
@@ -114,6 +139,33 @@ serdes_err_t serdes_conf_set (serdes_conf_t *sconf,
                 else
                         sconf->deserializer_framing = framing;
 
+        } else if (!strcmp(name, "ssl.ca.location")) {
+                if (sconf->schema_security_info.ca_path)
+                        free(sconf->schema_security_info.ca_path);
+                sconf->schema_security_info.ca_path = strdup(val);
+        } else if (!strcmp(name, "ssl.certificate.location") && val) {
+                if (sconf->schema_security_info.cert_path)
+                        free(sconf->schema_security_info.cert_path);
+                sconf->schema_security_info.cert_path = strdup(val);
+        } else if (!strcmp(name, "ssl.key.location")) {
+                if (sconf->schema_security_info.key_path)
+                        free(sconf->schema_security_info.key_path);
+                sconf->schema_security_info.key_path = strdup(val);
+        } else if (!strcmp(name, "ssl.enabled.min_protocol")) {
+                if (!strcmp(val, "1.0")) {
+                        sconf->schema_security_info.min_tls_version = CURL_SSLVERSION_TLSv1_0;
+                } else if (!strcmp(val, "1.1")) {
+                        sconf->schema_security_info.min_tls_version = CURL_SSLVERSION_TLSv1_1;
+                } else if (!strcmp(val, "1.2")) {
+                        sconf->schema_security_info.min_tls_version = CURL_SSLVERSION_TLSv1_2;
+                } else if (!strcmp(val, "1.3")) {
+                        sconf->schema_security_info.min_tls_version = CURL_SSLVERSION_TLSv1_3;
+                } else {
+                        snprintf(errstr, errstr_size,
+                                 "Invalid value for %s, allowed values: "
+                                 "1.0, 1.1, 1.2, 1.3", name);
+                        return SERDES_ERR_CONF_INVALID;
+                }
         } else if (!strcmp(name, "debug")) {
                 if (!strcmp(val, "all"))
                         sconf->debug = 1;

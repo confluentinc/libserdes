@@ -66,4 +66,8 @@ to the schema registries, all other configuration is optional.
  * `schema.registry.url` - comma separated list of schema registry base URLs (no default)
  * `deserializer.framing` - expected framing format when deserializing data: `none` or `cp1` (Confluent Platform framing). (default: `cp1`)
  * `serializer.framing` - framing format inserted when serializing data: `none` or `cp1` (Confluent Platform framing). (default: `cp1`)
+ * `ssl.ca.location` - location to the CA certificate (no default)
+ * `ssl.certificate.location` - location to the client certificate. (no default)
+ * `ssl.key.location` - location to the private key. (no default)
+ * `ssl.enabled.min_protocol` - the minimal tls version to use. The value can be `1.0`, `1.1`, `1.2` or `1.3`. (no default)
  * `debug` - enable/disable debugging with `all` or `none`. (default: `none`)
