@@ -1,0 +1,6 @@
+examples/kafka-serdes-avro-console-consumer.cpp
+examples/kafka-serdes-avro-console-producer.cpp
+examples/Makefile
+examples/serdes-kafka-avro-client.c
+examples/serdes-tool.cpp
+

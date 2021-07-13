@@ -1,0 +1,6 @@
+*.log
+files
+confluent-libserdes-dev
+confluent-libserdes1-dbg
+confluent-libserdes1
+tmp

@@ -1,0 +1,11 @@
+
+Build RPM packages
+==================
+
+Requires: mock
+
+
+Build:
+
+   MOCK_CONFIG=fedora-20-x86_64 make
+

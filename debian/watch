@@ -1,0 +1,2 @@
+version=3
+http://github.com/confluentinc/libserdes/tags .*/(\d[\d\.]*)\.tar\.gz

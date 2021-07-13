@@ -1,0 +1,5 @@
+confluent-libserdes (1.0.0-1) unstable; urgency=medium
+
+  * Initial release
+
+ -- Magnus Edenhill <magnus@confluent.io>  Thu, 12 May 2016 09:27:01 +0200

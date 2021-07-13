@@ -1,0 +1,9 @@
+usr/include/*/serdes.h
+usr/include/*/serdes-common.h
+usr/include/*/serdes-avro.h
+usr/include/*/serdescpp.h
+usr/include/*/serdescpp-avro.h
+usr/lib/*/libserdes.a
+usr/lib/*/libserdes.so
+usr/lib/*/libserdes++.a
+usr/lib/*/libserdes++.so
