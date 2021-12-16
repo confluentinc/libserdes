@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2020 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 
 
 /**
- * 
+ *
  * serdes-common.h contains artifacts shared between the C and C++ interface,
  * such as types and error codes.
  */
@@ -79,30 +79,6 @@ serdes_err_t serdes_conf_set (serdes_conf_t *sconf,
 
 
 
-/**
- * Set optional schema loader.
- * The schema loader is responsible for parsing the schema definition
- * and returning a schema object (not to be confused with serdes_schema_t) that
- * will be used for serialization and deserialization.
- * If loading fails a human readable error string must be written to errstr
- * (of maximum size errstr_size including Null byte) and NULL be returned.
- *
- * The unloader is responsible for freeing any memory or resources from the
- * loader callback.
- *
- * Default: Avro-C library if ENABLE_AVRO_C is set at library buildtime, else none.
- */
-SERDES_EXPORT
-void serdes_conf_set_schema_load_cb (serdes_conf_t *sconf,
-                                     void *(*load_cb) (serdes_schema_t *schema,
-                                                       const char *definition,
-                                                       size_t definition_len,
-                                                       char *errstr,
-                                                       size_t errstr_size,
-                                                       void *opaque),
-                                     void (*unload_cb) (serdes_schema_t *schema,
-                                                        void *schema_obj,
-                                                        void *opaque));
 
 /**
  * Set optional log callback to use for serdes originated log messages.
@@ -189,6 +165,7 @@ serdes_schema_t *serdes_schema_get (serdes_t *sd, const char *name, int id,
  */
 SERDES_EXPORT
 serdes_schema_t *serdes_schema_add (serdes_t *sd, const char *name, int id,
+                                    const char *type,
                                     const void *definition, int definition_len,
                                     char *errstr, int errstr_size);
 
@@ -211,6 +188,13 @@ const char *serdes_schema_name (serdes_schema_t *schema);
 
 
 /**
+ * @returns the schema type ("AVRO", "PROTOBUF", "JSON", ..).
+ */
+SERDES_EXPORT
+const char *serdes_schema_type (serdes_schema_t *schema);
+
+
+/**
  * Returns the schema definition.
  * The returned pointer is only valid until the schema is destroyed.
  */
@@ -219,9 +203,19 @@ const char *serdes_schema_definition (serdes_schema_t *schema);
 
 
 /**
- * Returns the schema object.
- * It's type depends on the serdes_conf_set_schema_load_cb() configuration
- * and defaults to `avro_schema_t *`.
+ * @brief Convenience function for association an arbitrary schema object,
+ *        such as the Avro schema object, with a serdes schema.
+ *        This object is not used by libserdes.
+ *        Use serdes_schema_object() to retrieve the pointer.
+ *        Clear the reference by setting NULL.
+ */
+SERDES_EXPORT
+void serdes_schema_set_object (serdes_schema_t *schema, void *schema_object);
+
+
+/**
+ * @returns the schema object as set by serdes_schema_object_set(), or NULL
+ *          if not set.
  */
 SERDES_EXPORT
 void *serdes_schema_object (serdes_schema_t *schema);
