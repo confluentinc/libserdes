@@ -124,7 +124,6 @@ void usage (const std::string me) {
       " -r <schreg-urls>  Schema registry URL\n"
       " -s <schema-name>  Schema/subject name\n"
       " -S <schema-def>   Schema definition (JSON)\n"
-      " -X kafka.topic.<n>=<v> Set RdKafka topic configuration\n"
       " -X kafka.<n>=<v>  Set RdKafka global configuration\n"
       " -X <n>=<v>        Set Serdes configuration\n"
       " -v                Increase verbosity\n"
@@ -179,11 +178,6 @@ int main (int argc, char **argv) {
    * Configured passed through -X kafka.prop=val will be set on this object. */
   RdKafka::Conf *kconf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
 
-  /* Create rdkafka default topic configuration object.
-   * Configuration passed through -X kafka.topic.prop=val will be set .. */
-  RdKafka::Conf *tconf = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
-
-
   /* Command line argument parsing */
   int opt;
   while ((opt = getopt(argc, argv, "b:t:p:g:r:s:S:X:vq")) != -1) {
@@ -225,18 +219,6 @@ int main (int argc, char **argv) {
 
           std::string name = optarg;
           std::string val  = t+1;
-
-          if (!strncmp(name.c_str(), "kafka.topic.", 12)) {
-            RdKafka::Conf::ConfResult kres;
-
-            kres = tconf->set(name.substr(12), val, errstr);
-            if (kres == RdKafka::Conf::CONF_INVALID)
-              FATAL(errstr);
-            else if (kres == RdKafka::Conf::CONF_OK)
-              break;
-
-            /* Unknown property, fall through. */
-          }
 
           if (!strncmp(name.c_str(), "kafka.", 6)) {
             RdKafka::Conf::ConfResult kres;
@@ -351,13 +333,6 @@ int main (int argc, char **argv) {
     FATAL(errstr);
   delete kconf;
 
-  /* Create topic object */
-  RdKafka::Topic *ktopic = RdKafka::Topic::create(producer, topic,
-                                                  tconf, errstr);
-  if (!ktopic)
-    FATAL(errstr);
-  delete tconf;
-
   /*
    * Read JSON from stdin, convert to Avro datum, serialize and produce
    */
@@ -378,14 +353,19 @@ int main (int argc, char **argv) {
     delete datum;
 
     /* Produce to Kafka */
-    RdKafka::ErrorCode kerr = producer->produce(ktopic, partition,
-                                                &out, NULL, NULL);
+    RdKafka::ErrorCode kerr = producer->produce(topic, partition,
+                                                RdKafka::Producer::RK_MSG_COPY,
+                                                out.data(), out.size(),
+                                                NULL, 0, 0, NULL);
 
     if (kerr != RdKafka::ERR_NO_ERROR) {
       std::cerr << "% Failed to produce message: "
                 << RdKafka::err2str(kerr) << std::endl;
       break;
     }
+
+    /* Serve delivery reports from previously produced messages */
+    producer->poll(0);
   }
 
   /* Wait for all messages to be delivered */
