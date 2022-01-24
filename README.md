@@ -1,6 +1,6 @@
 # libserdes
 
-Copyright(C) 2015-2016 Confluent Inc.
+Copyright(C) 2015-2022 Confluent Inc.
 
  * This software is licensed under the Apache 2.0 license.
 ---------------------------------------------------------------------------
