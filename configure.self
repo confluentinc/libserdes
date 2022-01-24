@@ -11,9 +11,9 @@ mkl_require socket
 function checks {
 
     # Semi optional libs
-    mkl_lib_check "avro-c" ENABLE_AVRO_C fail CC "-lavro" \
+    mkl_lib_check --libname=avro-c "avro_c" ENABLE_AVRO_C fail CC "-lavro" \
 		  "#include <avro.h>"
-    mkl_lib_check "avro-cpp" ENABLE_AVRO_CPP disable CXX "-lavrocpp" ""
+    mkl_lib_check --libname=avro-cpp "avro_cpp" ENABLE_AVRO_CPP disable CXX "-lavrocpp" ""
     mkl_lib_check "librdkafka" ENABLE_LIBRDKAFKA disable CXX "-lrdkafka++" \
 		  "#include <librdkafka/rdkafkacpp.h>"
 
