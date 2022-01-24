@@ -39,7 +39,7 @@ function checks {
             fi
         fi
         export CXX="${CXX}"
-        mkl_mkvar_set "CXX" CXX $CXX
+        mkl_mkvar_set "CXX" CXX "$CXX"
     fi
 
     # Handle machine bits, if specified.
@@ -49,7 +49,7 @@ function checks {
 	    mkl_mkvar_append CPPFLAGS CPPFLAGS "-m$MBITS"
 	    mkl_mkvar_append LDFLAGS LDFLAGS "-m$MBITS"
 	fi
-	if [[ -z "$ARFLAGS" && $MBITS == 64 && $MKL_DISTRO == "SunOS" ]]; then
+	if [[ -z "$ARFLAGS" && $MBITS == 64 && $MKL_DISTRO == "sunos" ]]; then
 	    # Turn on 64-bit archives on SunOS
 	    mkl_mkvar_append ARFLAGS ARFLAGS "S"
 	fi
@@ -57,7 +57,7 @@ function checks {
 
     # Provide prefix and checks for various other build tools.
     local t=
-    for t in LD:ld NM:nm OBJDUMP:objdump STRIP:strip ; do
+    for t in LD:ld NM:nm OBJDUMP:objdump STRIP:strip LIBTOOL:libtool RANLIB:ranlib ; do
         local tenv=${t%:*}
         t=${t#*:}
 	local tval="${!tenv}"
@@ -105,19 +105,19 @@ function checks {
     fi
     mkl_mkvar_set "pkgconfig" PKG_CONFIG $PKG_CONFIG
 
-    [[ ! -z "$PKG_CONFIG_PATH" ]] && mkl_env_append PKG_CONFIG_PATH "$PKG_CONFIG_PATH"
+    [[ ! -z "$append_PKG_CONFIG_PATH" ]] && mkl_env_append PKG_CONFIG_PATH "$append_PKG_CONFIG_PATH" ":"
 
     # install
     if [ -z "$INSTALL" ]; then
-	if [[ $MKL_DISTRO == "SunOS" ]]; then
+	if [[ $MKL_DISTRO == "sunos" ]]; then
 	    mkl_meta_set ginstall name "GNU install"
 	    if mkl_command_check ginstall "" ignore "ginstall --version"; then
-		INSTALL=ginstall
+		INSTALL=$(which ginstall)
 	    else
-		INSTALL=install
+		INSTALL=$(which install)
 	    fi
         else
-            INSTALL=install
+            INSTALL=$(which install)
 	fi
     fi
 
@@ -146,9 +146,23 @@ function checks {
         # LDFLAGS_STATIC is the LDFLAGS needed to enable static linking
         # of sub-sequent libraries, while
         # LDFLAGS_DYNAMIC is the LDFLAGS needed to enable dynamic linking.
-        mkl_mkvar_set staticlinking LDFLAGS_STATIC  "-Wl,-Bstatic"
-        mkl_mkvar_set staticlinking LDFLAGS_DYNAMIC "-Wl,-Bdynamic"
+        if [[ $MKL_DISTRO != "osx" ]]; then
+            mkl_mkvar_set staticlinking LDFLAGS_STATIC  "-Wl,-Bstatic"
+            mkl_mkvar_set staticlinking LDFLAGS_DYNAMIC "-Wl,-Bdynamic"
+            mkl_mkvar_set staticlinking HAS_LDFLAGS_STATIC y
+        else
+            # OSX linker can't enable/disable static linking so we'll
+            # need to find the .a through STATIC_LIB_libname env var
+            mkl_mkvar_set staticlinking HAS_LDFLAGS_STATIC n
+            # libtool -static supported
+            mkl_mkvar_set staticlinking HAS_LIBTOOL_STATIC y
+        fi
     fi
+
+    # Check for GNU ar (which has the -M option)
+    mkl_meta_set "gnuar" "name" "GNU ar"
+    mkl_command_check "gnuar" "HAS_GNU_AR" disable \
+                          "ar -V 2>/dev/null | grep -q GNU"
 }
 
 
@@ -162,10 +176,11 @@ for n in CFLAGS CPPFLAGS CXXFLAGS LDFLAGS ARFLAGS; do
     mkl_option "Compiler" "mk:$n" "--$n=$n" "Add $n flags"
 done
 
-mkl_option "Compiler" "env:PKG_CONFIG_PATH" "--pkg-config-path" "Extra paths for pkg-config"
+mkl_option "Compiler" "env:append_PKG_CONFIG_PATH" "--pkg-config-path=EXTRA_PATHS" "Extra paths for pkg-config"
 
 mkl_option "Compiler" "WITH_PROFILING" "--enable-profiling" "Enable profiling"
 mkl_option "Compiler" "WITH_STATIC_LINKING" "--enable-static" "Enable static linking"
 mkl_option "Compiler" "WITHOUT_OPTIMIZATION" "--disable-optimization" "Disable optimization flag to compiler" "n"
 mkl_option "Compiler" "env:MKL_NO_DEBUG_SYMBOLS" "--disable-debug-symbols" "Disable debugging symbols" "n"
 mkl_option "Compiler" "env:MKL_WANT_WERROR" "--enable-werror" "Enable compiler warnings as errors" "n"
+mkl_option "Compiler" "WITH_STRIP" "--enable-strip" "Strip libraries when installing" "n"
