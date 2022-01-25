@@ -55,5 +55,18 @@ function checks {
         fi
     fi
 
-}
+    # Check that C++11 is supported
+    if [[ $ENABLE_AVRO_CPP == y ]]; then
+        mkl_meta_set "cxx11" "name" "C++11 support"
+        if mkl_compile_check "cxx11" HAVE_CXX11 fail CXX "--std=c++11" \
+                             "
+int foo () {
+     auto var = 15;
 
+     return var;
+}"; then
+            mkl_mkvar_append CXXFLAGS CXXFLAGS "--std=c++11"
+        fi
+    fi
+
+}
