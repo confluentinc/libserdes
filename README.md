@@ -40,6 +40,7 @@ serialization type.
  * [libcurl](http://curl.haxx.se/)
  * [avro-c](http://avro.apache.org/docs/current/api/c/index.html)  ([download](http://apache.mirrors.spacedump.net/avro/stable/c))
  * [avro-cpp](http://avro.apache.org/docs/current/api/cpp/html/index.html) (for C++ interface)  ([download](http://apache.mirrors.spacedump.net/avro/stable/cpp))
+ * C++11 compiler
 
 
 On Debian/Ubuntu based systems:
