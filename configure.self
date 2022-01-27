@@ -1,6 +1,14 @@
 #!/bin/bash
 #
 
+mkl_meta_set "description" "name"      "libserdes"
+mkl_meta_set "description" "oneline"   "Confluent Schema-Registry C/C++ client library with Avro serialization"
+mkl_meta_set "description" "long"       "libserdes is a schema-based serializer/deserializer C/C++ library with support for Avro and the Confluent Platform Schema Registry"
+mkl_meta_set "description" "copyright" "Copyright (c) 2015-2022 Confluent Inc."
+
+# Enable generation of pkg-config .pc file
+mkl_mkvar_set "" GEN_PKG_CONFIG y
+
 mkl_require cxx
 mkl_require lib
 mkl_require pic
