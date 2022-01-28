@@ -57,6 +57,7 @@ rm -rf %{buildroot}
 %{_libdir}/libserdes.so
 %{_libdir}/libserdes++.a
 %{_libdir}/libserdes++.so
+%{_libdir}/pkgconfig/serdes*.pc
 %doc LICENSE README.md
 
 
