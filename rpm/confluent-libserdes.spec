@@ -51,12 +51,17 @@ rm -rf %{buildroot}
 
 
 %files devel
-%defattr(444,root,root)
+%defattr(-,root,root)
 %{_includedir}/libserdes
+%defattr(444,root,root)
 %{_libdir}/libserdes.a
 %{_libdir}/libserdes.so
 %{_libdir}/libserdes++.a
 %{_libdir}/libserdes++.so
+%{_libdir}/pkgconfig/serdes++.pc
+%{_libdir}/pkgconfig/serdes++-static.pc
+%{_libdir}/pkgconfig/serdes.pc
+%{_libdir}/pkgconfig/serdes-static.pc
 %doc LICENSE README.md
 
 
