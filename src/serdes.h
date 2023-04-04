@@ -23,7 +23,6 @@
  */
 #include "serdes-common.h"
 
-
 /* Private types, all access through methods */
 typedef struct serdes_s serdes_t;
 typedef struct serdes_schema_s serdes_schema_t;

@@ -16,10 +16,16 @@
 #pragma once
 
 #include <sys/queue.h>
-
+#if ENABLE_AVRO_C
 #include <avro.h>
+#endif
 
-#include "../config.h"
+#include <string.h>
+
+#ifndef HAVE_NO_CONFIG
+  #include "../config.h"
+#endif
+
 #include "tinycthread.h"
 #include "serdes.h"
 #include "rest.h"
@@ -37,9 +43,9 @@
 #endif
 
 /* Conditional Debugging macro */
-#define DBG(SD,FAC,FMT...) do {                                 \
-                if ((SD)->sd_conf.debug)                        \
-                        serdes_log(SD, LOG_DEBUG, FAC, FMT);    \
+#define DBG(SD,FAC,...) do {                                                          \
+                if ((SD)->sd_conf.debug)                                              \
+                        serdes_log(SD, LOG_DEBUG, FAC, __VA_ARGS__);    \
         } while (0)
 
 

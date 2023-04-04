@@ -28,7 +28,9 @@
 #include <signal.h>
 #include <getopt.h>
 
-#include <netinet/in.h> // remove
+#ifndef _WIN32
+  #include <netinet/in.h> // remove
+#endif
 
 /* Typical include path is <libserdes/serdescpp-avro.h> */
 #include "../src-cpp/serdescpp-avro.h"
@@ -52,8 +54,8 @@ static int payload_serialized = 0;
 static int key_serialized = 0;
 
 
-#define FATAL(reason...) do {                           \
-    std::cerr << "% FATAL: " << reason << std::endl;      \
+#define FATAL(...) do {                           \
+    std::cerr << "% FATAL: " << __VA_ARGS__ << std::endl;      \
     exit(1);                                            \
   } while (0)
 
@@ -182,7 +184,7 @@ static void msg_handle (RdKafka::Message *msg) {
 
 
 
-static __attribute__((noreturn))
+[[noreturn]] static
 void usage (const std::string me) {
 
   std::cerr <<
@@ -212,12 +214,17 @@ int main (int argc, char **argv) {
   std::string errstr;
 
   /* Controlled termination */
+#ifdef _WIN32
+  signal(SIGINT, sig_term);
+  signal(SIGTERM, sig_term);
+  signal(SIGABRT, sig_term);
+#else
   struct sigaction sa;
   memset(&sa, 0, sizeof(sa));
   sa.sa_handler = sig_term;
   sigaction(SIGINT, &sa, NULL);
   sigaction(SIGTERM, &sa, NULL);
-
+#endif
 
   /* Create serdes configuration object.
    * Configuration passed through -X prop=val will be set on this object,

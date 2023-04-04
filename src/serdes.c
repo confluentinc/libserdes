@@ -17,6 +17,8 @@
 #include "serdes_int.h"
 
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 const char *serdes_err2str (serdes_err_t err) {
         switch (err)

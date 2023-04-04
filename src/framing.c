@@ -16,8 +16,13 @@
 
 #include "serdes_int.h"
 
+#include <stdint.h>
+#include <stdio.h>
+#ifdef _WIN32
+#include <winsock.h>
+#else
 #include <arpa/inet.h> /* ntohl/htonl */
-
+#endif
 
 size_t serdes_serializer_framing_size (serdes_t *sd) {
         switch (sd->sd_conf.serializer_framing)

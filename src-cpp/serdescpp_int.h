@@ -25,10 +25,26 @@ extern "C" {
 #include "serdes.h"
 };
 
+#include "serdescpp.h"
 
 namespace Serdes {
 
+  typedef void* (*schema_load_cb_t) (
+      serdes_schema_t* schema,
+      const char* definition,
+      size_t definition_len,
+      char* errstr,
+      size_t errstr_size,
+      void* opaque
+  );
 
+  typedef void (*schema_unload_cb_t) (
+      serdes_schema_t* schema,
+      void* schema_obj,
+      void* opaque
+  );
+
+    inline
   std::string err2str (ErrorCode err) {
     return std::string(serdes_err2str(static_cast<serdes_err_t>(err)));
   }
@@ -76,8 +92,6 @@ namespace Serdes {
       if (sd_)
         serdes_destroy(sd_);
     }
-
-    static Handle *create (const Conf *conf, std::string &errstr);
 
     HandleImpl (): log_cb_(NULL), sd_(NULL) {}
 
@@ -158,31 +172,9 @@ namespace Serdes {
     serdes_schema_t *schema_;
   };
 
-
-  class AvroImpl : public Avro, public HandleImpl {
- public:
-    ~AvroImpl () { }
-
-    static Avro *create (const Conf *conf, std::string &errstr);
-
-    ssize_t serialize (Schema *schema, const avro::GenericDatum *datum,
-                       std::vector<char> &out, std::string &errstr);
-
-    ssize_t deserialize (Schema **schemap, avro::GenericDatum **datump,
-                         const void *payload, size_t size, std::string &errstr);
-
-    ssize_t serializer_framing_size () const {
-      return HandleImpl::serializer_framing_size();
-    }
-
-    ssize_t deserializer_framing_size () const {
-      return HandleImpl::deserializer_framing_size();
-    }
-
-    int schemas_purge (int max_age) {
-      return HandleImpl::schemas_purge(max_age);
-    }
-
-  };
+  /**
+   * Common function to create a serdes handle based on conf.
+   */
+  int create_serdes(HandleImpl* hnd, const Conf* conf, std::string& errstr, schema_load_cb_t load_cb, schema_unload_cb_t unload_cb);
 
 }

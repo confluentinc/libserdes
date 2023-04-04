@@ -15,6 +15,12 @@
  */
 #pragma once
 
+#ifdef _MSC_VER
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#else
+#include <unistd.h>
+#endif
 
 /*******************************************************************************
  *
@@ -39,7 +45,7 @@ typedef enum {
 } serdes_err_t;
 
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && defined SERDES_USE_DLL
 /* MSVC Win32 DLL symbol exports */
 #undef SERDES_EXPORT
 #ifdef SERDES_DLL_EXPORTS /* Set when building DLL */

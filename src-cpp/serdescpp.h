@@ -16,8 +16,12 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
-#include <avro/ValidSchema.hh>
+// forward declaration
+namespace avro {
+    class ValidSchema;
+}
 
 
 /**

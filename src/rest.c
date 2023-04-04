@@ -18,6 +18,10 @@
 #include <stdarg.h>
 #include <assert.h>
 
+#ifdef _MSC_VER
+  #include <malloc.h>
+#endif
+
 #include <curl/curl.h>
 
 #include "rest.h"
@@ -358,7 +362,7 @@ static CURLcode rest_req_curl (CURL *curl, rest_response_t *rr) {
  *
  * Returns a response handle which needs to be checked for error.
  */
-static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
+static rest_response_t * rest_req(url_list_t * ul, rest_cmd_t cmd,
                                   const void *payload, int size,
                                   const char *url_path_fmt, va_list ap) {
 
@@ -388,8 +392,8 @@ static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
         /* Response holder */
         rr = rest_response_new(0);
 
-#define do_curl_setopt(curl,opt,val...) do {                            \
-                CURLcode _ccode = curl_easy_setopt(curl, opt, val);     \
+#define do_curl_setopt(curl,opt,...) do {                            \
+                CURLcode _ccode = curl_easy_setopt(curl, opt, __VA_ARGS__);     \
                 if (_ccode != CURLE_OK) {                               \
                         rest_response_set_result(rr, -1,                \
                                                  "curl: setopt %s failed: %s", \

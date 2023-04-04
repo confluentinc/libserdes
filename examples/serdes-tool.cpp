@@ -28,14 +28,14 @@
 
 #include <avro/Decoder.hh>
 
-/* Typical include path is <libserdes/serdescpp.h> */
-#include "../src-cpp/serdescpp.h"
+/* Typical include path is <libserdes/serdescpp-avro.h> */
+#include "../src-cpp/serdescpp-avro.h"
 
 static int run = 1;
 static int verbosity = 2;
 
-#define FATAL(reason...) do {                           \
-    std::cerr << "FATAL: " << reason << std::endl;      \
+#define FATAL(...) do {                           \
+    std::cerr << "FATAL: " << __VA_ARGS__ << std::endl;      \
     exit(1);                                            \
   } while (0)
 
@@ -111,12 +111,17 @@ int main (int argc, char **argv) {
 
 
   /* Controlled termination */
+#ifdef _WIN32
+  signal(SIGINT, sig_term);
+  signal(SIGTERM, sig_term);
+  signal(SIGABRT, sig_term);
+#else
   struct sigaction sa;
   memset(&sa, 0, sizeof(sa));
   sa.sa_handler = sig_term;
   sigaction(SIGINT, &sa, NULL);
   sigaction(SIGTERM, &sa, NULL);
-
+#endif
 
   /* Create serdes configuration object.
    * Configuration passed through -X prop=val will be set on this object,
@@ -185,7 +190,7 @@ int main (int argc, char **argv) {
   /*
    * Create serdes handle
    */
-  Serdes::Handle *serdes = Serdes::Handle::create(sconf, errstr);
+  Serdes::Handle *serdes = Serdes::Avro::create(sconf, errstr);
   if (!serdes)
     FATAL("Failed to create serdes handle: " << errstr);
 
