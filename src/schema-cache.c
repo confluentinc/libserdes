@@ -419,6 +419,25 @@ serdes_schema_find_by_definition (serdes_t *sd,
         return ss;
 }
 
+static serdes_schema_t *
+serdes_schema_find_by_name (serdes_t *sd,
+                            const char *name,
+                            int do_lock) {
+        serdes_schema_t *ss;
+
+        if (do_lock)
+                mtx_lock(&sd->sd_lock);
+        LIST_FOREACH(ss, &sd->sd_schemas, ss_link) {
+                if (!strcmp(ss->ss_name, name))
+                        break;
+        }
+        if (do_lock)
+                mtx_unlock(&sd->sd_lock);
+
+        return ss;
+}
+
+
 serdes_schema_t *serdes_schema_add (serdes_t *sd, const char *name, int id,
                                     const void *definition, int definition_len,
                                     char *errstr, int errstr_size) {
@@ -428,20 +447,28 @@ serdes_schema_t *serdes_schema_add (serdes_t *sd, const char *name, int id,
                 definition_len = strlen(definition);
 
         mtx_lock(&sd->sd_lock);
-        if (!(ss = serdes_schema_find_by_definition(sd, definition,
-                                                    definition_len,
-                                                    0/*no-lock*/)))
-                ss = serdes_schema_add0(sd, name, id,
+        if (name)
+        {
+                if (!(ss = serdes_schema_find_by_name (sd, name, 0/*no-lock*/)))
+                        ss = serdes_schema_add0(sd, name, id,
                                         definition, definition_len,
                                         errstr, errstr_size);
+        }
+        else
+        {
+                if (!(ss = serdes_schema_find_by_definition (sd, definition,
+                                                    definition_len,
+                                                    0/*no-lock*/)))
+                        ss = serdes_schema_add0(sd, name, id,
+                                        definition, definition_len,
+                                        errstr, errstr_size);
+        }
         mtx_unlock(&sd->sd_lock);
 
         if (ss)
                 serdes_schema_mark_used(ss);
         return ss;
 }
-
-
 
 
 serdes_schema_t *serdes_schema_get (serdes_t *sd, const char *name, int id,
