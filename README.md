@@ -44,7 +44,7 @@ serialization type.
 
 
 On Debian/Ubuntu based systems:
-`sudo apt-get install libjansson-dev libcurl-gnutls-dev`
+`sudo apt-get install libjansson-dev libcurl4-gnutls-dev`
 
  **NOTE: The avro libraries needs to be installed manually or through [Confluent's APT and YUM repositories](http://docs.confluent.io/current/installation.html)**
 
