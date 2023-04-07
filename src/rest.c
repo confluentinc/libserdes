@@ -358,7 +358,9 @@ static CURLcode rest_req_curl (CURL *curl, rest_response_t *rr) {
  *
  * Returns a response handle which needs to be checked for error.
  */
-static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
+static rest_response_t *rest_req (url_list_t *ul,
+                                  const security_info_t *secure_info,
+                                  rest_cmd_t cmd,
                                   const void *payload, int size,
                                   const char *url_path_fmt, va_list ap) {
 
@@ -427,6 +429,21 @@ static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
                 break;
         }
 
+        if (secure_info) {
+                if (secure_info->ca_path && strlen(secure_info->ca_path)) {
+                        do_curl_setopt(curl, CURLOPT_CAINFO, secure_info->ca_path);
+                }
+                if (secure_info->cert_path && strlen(secure_info->cert_path)) {
+                        do_curl_setopt(curl, CURLOPT_SSLCERT, secure_info->cert_path);
+                }
+                if (secure_info->key_path && strlen(secure_info->key_path)) {
+                        do_curl_setopt(curl, CURLOPT_SSLKEY, secure_info->key_path);
+                }
+                if (secure_info->min_tls_version) {
+                        do_curl_setopt(curl, CURLOPT_SSLVERSION, secure_info->min_tls_version);
+                }
+        }
+
 
         /* Try each URL in the URL list until one works. */
         ccode = CURLE_URL_MALFORMAT;
@@ -462,12 +479,14 @@ static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
 
 
 
-rest_response_t *rest_get (url_list_t *ul, const char *url_path_fmt, ...) {
+rest_response_t *rest_get (url_list_t *ul,
+                           const security_info_t *secure_info,
+                           const char *url_path_fmt, ...) {
         rest_response_t *rr;
         va_list ap;
 
         va_start(ap, url_path_fmt);
-        rr = rest_req(ul, REST_GET, NULL, 0, url_path_fmt, ap);
+        rr = rest_req(ul, secure_info, REST_GET, NULL, 0, url_path_fmt, ap);
         va_end(ap);
 
         return rr;
@@ -475,13 +494,14 @@ rest_response_t *rest_get (url_list_t *ul, const char *url_path_fmt, ...) {
 
 
 rest_response_t *rest_post (url_list_t *ul,
+                            const security_info_t *secure_info,
                             const void *payload, int size,
                             const char *url_path_fmt, ...) {
         rest_response_t *rr;
         va_list ap;
 
         va_start(ap, url_path_fmt);
-        rr = rest_req(ul, REST_POST, payload, size, url_path_fmt, ap);
+        rr = rest_req(ul, secure_info, REST_POST, payload, size, url_path_fmt, ap);
         va_end(ap);
 
         return rr;

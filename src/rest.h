@@ -36,6 +36,17 @@ typedef struct url_list_s {
         int    max_len;       /* Longest URL's length */
 } url_list_t;
 
+/**
+ * HTTP security related information. SSL/Auth/etc.
+ */
+typedef struct security_info_s {
+        char  *ca_path;
+        char  *cert_path;
+        char  *key_path;
+        /* CURLOPT_SSLVERSION */
+        int   min_tls_version;
+} security_info_t;
+
 
 /**
  * Parse a comma-separated list of URLs and store them in the provided 'ul'.
@@ -101,7 +112,9 @@ void rest_response_destroy (rest_response_t *rr);
  *
  * This is a blocking call.
  */
-rest_response_t *rest_get (url_list_t *ul, const char *url_path_fmt, ...);
+rest_response_t *rest_get (url_list_t *ul,
+                           const security_info_t *secure_info,
+                           const char *url_path_fmt, ...);
 
 
 /* REST PUT request.
@@ -109,6 +122,7 @@ rest_response_t *rest_get (url_list_t *ul, const char *url_path_fmt, ...);
  * Same semantics as `rest_get()` but POSTs `payload` of `size` bytes.
  */
 rest_response_t *rest_post (url_list_t *ul,
+                            const security_info_t *secure_info,
                             const void *payload, int size,
                             const char *url_path_fmt, ...);
 
