@@ -1,0 +1,15 @@
+[requires]
+libavrocpp/1.11.1
+libcurl/7.88.1
+jansson/2.14
+openssl/1.1.1t
+
+librdkafka/1.9.2
+
+[generators]
+CMakeToolchain
+CMakeDeps
+
+[options]
+libcurl:with_ssl=openssl
+openssl:shared=True
