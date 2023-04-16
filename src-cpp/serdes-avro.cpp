@@ -73,7 +73,7 @@ Avro *Avro::create (const Conf *conf, std::string &errstr) {
 
 ssize_t AvroImpl::serialize (Schema *schema, const avro::GenericDatum *datum,
                              std::vector<char> &out, std::string &errstr) {
-  auto avro_schema = schema->object();
+  auto avro_schema = static_cast<const avro::ValidSchema* const>(schema->object());
 
   /* Binary encoded output stream */
   auto bin_os = avro::memoryOutputStream();
@@ -129,7 +129,7 @@ ssize_t AvroImpl::deserialize (Schema **schemap, avro::GenericDatum **datump,
       return -1;
   }
 
-  avro::ValidSchema *avro_schema = schema->object();
+  auto avro_schema = schema->object<avro::ValidSchema>();
 
   /* Binary input stream */
   auto bin_is = avro::memoryInputStream((const uint8_t *)payload, size);

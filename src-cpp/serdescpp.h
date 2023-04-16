@@ -18,11 +18,6 @@
 #include <string>
 #include <vector>
 
-// forward declaration
-namespace avro {
-    class ValidSchema;
-}
-
 
 /**
  *
@@ -173,7 +168,7 @@ public:
    *
    * In case schema parsing or storing fails NULL is returned and a human
    * readable error description is written to `errstr`
- */
+   */
   static Schema *add (Handle *handle, int id,
                       const std::string &definition, std::string &errstr);
   static Schema *add (Handle *handle, const std::string &name,
@@ -200,18 +195,22 @@ public:
    */
   virtual const std::string definition () = 0;
 
-  /**
-   * Returns the Avro schema object.
-   */
-  virtual avro::ValidSchema *object () = 0;
-
+  template <typename T = void>
+  const T * const object () {
+      return static_cast<const T * const>(schema_object());
+  }
 
   /**
    * Writes framing to vector.
    * Returns the number of bytes written.
    */
   virtual ssize_t framing_write (std::vector<char> &out) const = 0;
-};
 
+protected:
+  /**
+   * Returns the schema object as loaded by schema_load_cb.
+   */
+  virtual const void * const schema_object () = 0;
+};
 
 }

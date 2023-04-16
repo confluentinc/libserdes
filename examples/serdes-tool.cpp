@@ -82,7 +82,7 @@ static void decode_json (Serdes::Schema *schema, const std::string &json_str) {
 
   avro::DecoderPtr decoder;
 
-  decoder = avro::jsonDecoder(*static_cast<avro::ValidSchema*>(schema->object()));
+  decoder = avro::jsonDecoder(*schema->object<avro::ValidSchema>());
 
   auto istream = avro::memoryInputStream((const uint8_t *)json_str.c_str(), json_str.size());
 

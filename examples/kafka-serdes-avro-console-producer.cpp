@@ -76,7 +76,7 @@ class MyDeliveryReportCb : public RdKafka::DeliveryReportCb {
 static int json2avro (Serdes::Schema *schema, const std::string &json,
                       avro::GenericDatum **datump) {
 
-  avro::ValidSchema *avro_schema = schema->object();
+  auto avro_schema = schema->object<avro::ValidSchema>();
 
   /* Input stream from json string */
   std::istringstream iss(json);

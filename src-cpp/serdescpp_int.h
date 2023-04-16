@@ -137,26 +137,26 @@ namespace Serdes {
                         std::string &definition, std::string &errstr);
 
 
-    int id () {
+    int id () override {
       return serdes_schema_id(schema_);
     }
 
-    const std::string name () {
+    const std::string name () override {
       const char *name = serdes_schema_name(schema_);
       return std::string(name ? name : "");
     }
 
-    const std::string definition () {
+    const std::string definition () override {
       const char *def = serdes_schema_definition(schema_);
       return std::string(def ? def : "");
     }
 
-    avro::ValidSchema *object () {
-      return static_cast<avro::ValidSchema*>(serdes_schema_object(schema_));
+    const void * const schema_object () override {
+      return serdes_schema_object(schema_);
     }
 
 
-    ssize_t framing_write (std::vector<char> &out) const {
+    ssize_t framing_write (std::vector<char> &out) const override {
       ssize_t framing_size = serdes_serializer_framing_size(serdes_schema_handle(schema_));
       if (framing_size == 0)
         return 0;

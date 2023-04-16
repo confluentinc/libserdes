@@ -66,7 +66,7 @@ static int key_serialized = 0;
  */
 static int avro2json (Serdes::Schema *schema, const avro::GenericDatum *datum,
                       std::string &str, std::string &errstr) {
-  avro::ValidSchema *avro_schema = schema->object();
+  auto avro_schema = schema->object<avro::ValidSchema>();
 
   /* JSON encoder */
   avro::EncoderPtr json_encoder = avro::jsonEncoder(*avro_schema);
