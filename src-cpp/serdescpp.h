@@ -196,8 +196,13 @@ public:
   virtual const std::string definition () = 0;
 
   template <typename T = void>
-  const T * const object () {
-      return static_cast<const T * const>(schema_object());
+  T * object () {
+      return static_cast<T *>(schema_object());
+  }
+
+  template <typename T = void>
+  const T * object () const {
+      return static_cast<const T *>(schema_object());
   }
 
   /**
@@ -210,7 +215,12 @@ protected:
   /**
    * Returns the schema object as loaded by schema_load_cb.
    */
-  virtual const void * const schema_object () = 0;
+  virtual void * schema_object () = 0;
+    
+  /**
+   * Returns the schema object as loaded by schema_load_cb.
+   */
+  virtual const void * schema_object () const = 0;
 };
 
 }

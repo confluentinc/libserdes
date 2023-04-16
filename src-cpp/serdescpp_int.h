@@ -151,10 +151,13 @@ namespace Serdes {
       return std::string(def ? def : "");
     }
 
-    const void * const schema_object () override {
+    const void * schema_object () const override {
       return serdes_schema_object(schema_);
     }
 
+    void * schema_object () override {
+      return serdes_schema_object(schema_);
+    }
 
     ssize_t framing_write (std::vector<char> &out) const override {
       ssize_t framing_size = serdes_serializer_framing_size(serdes_schema_handle(schema_));
