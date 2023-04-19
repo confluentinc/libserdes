@@ -126,7 +126,7 @@ Schema *Schema::get (Handle *handle, const std::string &name,
 
 
 static Schema *schema_add (Handle *handle, const char* name, int id,
-                           const void *definition, int definition_len,
+                           const void *definition, size_t definition_len,
                            std::string &errstr) {
   HandleImpl *hnd = dynamic_cast<HandleImpl*>(handle);
     

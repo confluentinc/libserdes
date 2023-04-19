@@ -165,7 +165,7 @@ namespace Serdes {
         return 0;
 
       /* Make room for framing */
-      int pos = out.size();
+      auto pos = out.size();
       out.resize(out.size() + framing_size);
 
       /* Write framing */

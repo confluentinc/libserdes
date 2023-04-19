@@ -109,7 +109,7 @@ rest_response_t *rest_get (url_list_t *ul, const char *url_path_fmt, ...);
  * Same semantics as `rest_get()` but POSTs `payload` of `size` bytes.
  */
 rest_response_t *rest_post (url_list_t *ul,
-                            const void *payload, int size,
+                            const void *payload, size_t size,
                             const char *url_path_fmt, ...);
 
 

@@ -104,7 +104,7 @@ struct serdes_schema_s {
         char         *ss_name;               /* Name of schema */
 
         char         *ss_definition;         /* Schema definition */
-        int           ss_definition_len;     /* Schema definition length */
+        size_t        ss_definition_len;     /* Schema definition length */
 
         time_t        ss_t_last_used;        /* Timestamp of last use. */
 
