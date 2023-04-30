@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2015-2023 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include <ctype.h>
+#include <limits.h>
 
 #include <jansson.h>
 
@@ -36,21 +37,31 @@ static __inline void serdes_schema_mark_used (serdes_schema_t *ss) {
 
 /**
  * Sets the schema's definition
+ *
+ * \param[in] ss schema instance
+ * \param[in] definition schema definition
+ * \param[in] len defiinition length between [0, SIZE_MAX-1]
  */
 static void serdes_schema_set_definition (serdes_schema_t *ss,
-                                          const void *definition, int len) {
+                                          const char *definition, size_t len) {
         if (ss->ss_definition) {
                 free(ss->ss_definition);
                 ss->ss_definition = NULL;
         }
 
         if (definition) {
-                if (len == -1)
-                        len = strlen(definition);
                 ss->ss_definition = malloc(len+1);
-                ss->ss_definition_len = len;
-                memcpy(ss->ss_definition, definition, len);
-                ss->ss_definition[len] = '\0';
+                if (ss->ss_definition) {
+                    ss->ss_definition_len = len;
+                    memcpy(ss->ss_definition, definition, len);
+                    ss->ss_definition[len] = '\0';
+                }
+                else {
+                    ss->ss_definition_len = 0;
+                }
+        }
+        else {
+            ss->ss_definition_len = 0;
         }
 }
 
@@ -100,7 +111,7 @@ static int serdes_schema_store (serdes_schema_t *ss,
         serdes_t *sd = ss->ss_sd;
         rest_response_t *rr;
         json_t *json, *json_id;
-        int enc_len;
+        size_t enc_len;
         char *enc;
         json_error_t err;
 
@@ -154,7 +165,17 @@ static int serdes_schema_store (serdes_schema_t *ss,
                 return -1;
         }
 
-        ss->ss_id = json_integer_value(json_id);
+        json_int_t id = json_integer_value(json_id);
+        if (id > INT_MAX) {
+            snprintf(errstr, errstr_size,
+                     "\"id\" int field too huge in schema POST response");
+            rest_response_destroy(rr);
+            json_decref(json_id);
+            json_decref(json);
+            return -1;
+        }
+    
+        ss->ss_id = (int)id;
 
         json_decref(json);
         rest_response_destroy(rr);
@@ -162,6 +183,12 @@ static int serdes_schema_store (serdes_schema_t *ss,
         return 0;
 }
 
+/**
+ * Maximum length of a schema definition
+ *
+ * The maximum schema length is SIZE_MAX - 1 due to null terminator 
+ */
+static size_t serdes_definition_max_length = SIZE_MAX - 1;
 
 /**
  * Loads schema definition
@@ -171,6 +198,12 @@ static int serdes_schema_store (serdes_schema_t *ss,
 static int serdes_schema_load (serdes_schema_t *ss,
                                const char *definition, size_t definition_len,
                                char *errstr, int errstr_size) {
+        if (definition_len > serdes_definition_max_length) {
+            snprintf(errstr, errstr_size,
+                "Maximum schema definition length exceeded");
+            return -1;
+        }
+
         serdes_t *sd = ss->ss_sd;
         char *wrapped = NULL;
 
@@ -184,9 +217,18 @@ static int serdes_schema_load (serdes_schema_t *ss,
          *             convert it to an object-based schema.
          *             https://issues.apache.org/jira/browse/AVRO-1691 */
         if (definition_len > 0 && *definition == '\"') {
-                wrapped = malloc(strlen("{ \"type\":   }") + definition_len + 1);
-                definition_len = sprintf(wrapped, "{ \"type\": %s }", definition);
-                definition = wrapped;
+                uint8_t wrapped_extension_len = strlen("{ \"type\":   }");
+                if (definition_len > serdes_definition_max_length - wrapped_extension_len) {
+                    snprintf(errstr, errstr_size,
+                        "Wrapped schema definition exceeds maximum length");
+                    return -1;
+                }
+                size_t wrapped_len = wrapped_extension_len + definition_len;
+                wrapped = malloc(wrapped_len + 1);
+                if (wrapped) {
+                    definition_len = snprintf(wrapped, wrapped_len, "{ \"type\": %s }", definition);
+                    definition = wrapped;
+                }
         }
 
         DBG(ss->ss_sd, "SCHEMA_LOAD",
@@ -294,7 +336,18 @@ static int serdes_schema_fetch (serdes_schema_t *ss,
                         return -1;
                 }
 
-                ss->ss_id = json_integer_value(json_id);
+                json_int_t id = json_integer_value(json_id);
+                if (id > INT_MAX) {
+                    snprintf(errstr, errstr_size,
+                            "\"id\" int field too hugein "
+                             "subject \"%s\" envelope",
+                             ss->ss_name);
+                    rest_response_destroy(rr);
+                    json_decref(json_id);
+                    json_decref(json);
+                    return -1;
+                }
+                ss->ss_id = (int)id;
         }
 
         if (serdes_schema_load(ss,
@@ -330,7 +383,7 @@ static int serdes_schema_fetch (serdes_schema_t *ss,
 static serdes_schema_t *serdes_schema_add0 (serdes_t *sd,
                                             const char *name, int id,
                                             const void *definition,
-                                            int definition_len,
+                                            size_t definition_len,
                                             char *errstr, int errstr_size) {
 
         serdes_schema_t *ss;
@@ -342,6 +395,11 @@ static serdes_schema_t *serdes_schema_add0 (serdes_t *sd,
         }
 
         ss = calloc(1, sizeof(*ss));
+        if (!ss) {
+                snprintf(errstr, errstr_size,
+                         "Schema allocation error");
+                return NULL;
+        }
         ss->ss_id = id;
         ss->ss_sd = sd;
 
@@ -402,7 +460,7 @@ static serdes_schema_t *serdes_schema_find_by_id (serdes_t *sd, int id,
 
 static serdes_schema_t *
 serdes_schema_find_by_definition (serdes_t *sd,
-                                  const char *definition, int definition_len,
+                                  const char *definition, size_t definition_len,
                                   int do_lock) {
         serdes_schema_t *ss;
 
@@ -420,7 +478,7 @@ serdes_schema_find_by_definition (serdes_t *sd,
 }
 
 serdes_schema_t *serdes_schema_add (serdes_t *sd, const char *name, int id,
-                                    const void *definition, int definition_len,
+                                    const void *definition, size_t definition_len,
                                     char *errstr, int errstr_size) {
         serdes_schema_t *ss;
 

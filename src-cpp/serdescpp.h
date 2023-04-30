@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2015-2023 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 #pragma once
 
 #include <string>
-
-#include <avro/ValidSchema.hh>
+#include <vector>
 
 
 /**
@@ -169,7 +168,7 @@ public:
    *
    * In case schema parsing or storing fails NULL is returned and a human
    * readable error description is written to `errstr`
- */
+   */
   static Schema *add (Handle *handle, int id,
                       const std::string &definition, std::string &errstr);
   static Schema *add (Handle *handle, const std::string &name,
@@ -196,18 +195,32 @@ public:
    */
   virtual const std::string definition () = 0;
 
-  /**
-   * Returns the Avro schema object.
-   */
-  virtual avro::ValidSchema *object () = 0;
+  template <typename T = void>
+  T * object () {
+      return static_cast<T *>(schema_object());
+  }
 
+  template <typename T = void>
+  const T * object () const {
+      return static_cast<const T *>(schema_object());
+  }
 
   /**
    * Writes framing to vector.
    * Returns the number of bytes written.
    */
   virtual ssize_t framing_write (std::vector<char> &out) const = 0;
-};
 
+protected:
+  /**
+   * Returns the schema object as loaded by schema_load_cb.
+   */
+  virtual void * schema_object () = 0;
+    
+  /**
+   * Returns the schema object as loaded by schema_load_cb.
+   */
+  virtual const void * schema_object () const = 0;
+};
 
 }
