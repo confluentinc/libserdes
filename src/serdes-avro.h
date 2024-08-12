@@ -92,5 +92,4 @@ serdes_err_t serdes_deserialize_avro (serdes_t *serdes, avro_value_t *avro,
  * Returns the avro_schema_t object for a schema.
  */
 SERDES_EXPORT
-const avro_schema_t serdes_schema_avro (serdes_schema_t *schema);
-
+avro_schema_t serdes_schema_avro (serdes_schema_t *schema);
