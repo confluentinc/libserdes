@@ -55,6 +55,7 @@ typedef enum {
 struct serdes_conf_s {
         url_list_t  schema_registry_urls;      /* CSV list of schema
                                                 * registry URLs. */
+        security_info_t schema_security_info;  /* Security information (SSL/Auth/etc.) */
         int         debug;                     /* Debugging 1=enabled */
 
 

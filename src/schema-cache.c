@@ -120,7 +120,9 @@ static int serdes_schema_store (serdes_schema_t *ss,
         enc_len = strlen(enc);
 
         /* POST schema definition to remote schema registry */
-        rr = rest_post(&sd->sd_conf.schema_registry_urls, enc, enc_len,
+        rr = rest_post(&sd->sd_conf.schema_registry_urls,
+                       &sd->sd_conf.schema_security_info,
+                       enc, enc_len,
                        "/subjects/%s/versions", ss->ss_name);
 
         free(enc);
@@ -241,10 +243,12 @@ static int serdes_schema_fetch (serdes_schema_t *ss,
         if (ss->ss_id != -1) {
                 /* GET schema definition by id from remote schema registry */
                 rr = rest_get(&sd->sd_conf.schema_registry_urls,
+                              &sd->sd_conf.schema_security_info,
                               "/schemas/ids/%d", ss->ss_id);
         } else {
                 /* GET schema definition by name from remote schema registry */
                 rr = rest_get(&sd->sd_conf.schema_registry_urls,
+                              &sd->sd_conf.schema_security_info,
                               "/subjects/%s/versions/latest", ss->ss_name);
         }
 
