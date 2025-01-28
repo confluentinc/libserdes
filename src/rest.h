@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2015-2023 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ rest_response_t *rest_get (url_list_t *ul, const char *url_path_fmt, ...);
  * Same semantics as `rest_get()` but POSTs `payload` of `size` bytes.
  */
 rest_response_t *rest_post (url_list_t *ul,
-                            const void *payload, int size,
+                            const void *payload, size_t size,
                             const char *url_path_fmt, ...);
 
 

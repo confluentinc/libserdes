@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2015-2023 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,10 @@
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
+
+#ifdef _MSC_VER
+  #include <malloc.h>
+#endif
 
 #include <curl/curl.h>
 
@@ -186,6 +190,7 @@ int url_list_parse (url_list_t *ul, const char *urls) {
                 /* URL-encode auth fields, if they exist. */
                 ul->urls[ul->cnt-1] = url_encode(s);
 
+                // Add error management on url length limit
                 if ((len = strlen(ul->urls[ul->cnt-1])) > ul->max_len)
                         ul->max_len = len;
 
@@ -216,7 +221,7 @@ void url_list_clear (url_list_t *ul) {
 /**
  * Set response result.
  */
-static void rest_response_set_result (rest_response_t *rr, int resp_code,
+static void rest_response_set_result (rest_response_t *rr, long resp_code,
                                       const char *fmt, ...) {
         va_list ap;
 
@@ -309,6 +314,7 @@ static size_t rest_curl_write_cb (char *ptr, size_t size, size_t nmemb,
                                   void *userdata) {
         rest_response_t *rr = userdata;
 
+        // overflow check ?
         size *= nmemb;
 
         if (rr->len + (int)size > rr->size)
@@ -358,8 +364,8 @@ static CURLcode rest_req_curl (CURL *curl, rest_response_t *rr) {
  *
  * Returns a response handle which needs to be checked for error.
  */
-static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
-                                  const void *payload, int size,
+static rest_response_t * rest_req(url_list_t * ul, rest_cmd_t cmd,
+                                  const void *payload, size_t size,
                                   const char *url_path_fmt, va_list ap) {
 
         CURL *curl;
@@ -388,8 +394,8 @@ static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
         /* Response holder */
         rr = rest_response_new(0);
 
-#define do_curl_setopt(curl,opt,val...) do {                            \
-                CURLcode _ccode = curl_easy_setopt(curl, opt, val);     \
+#define do_curl_setopt(curl,opt,...) do {                            \
+                CURLcode _ccode = curl_easy_setopt(curl, opt, __VA_ARGS__);     \
                 if (_ccode != CURLE_OK) {                               \
                         rest_response_set_result(rr, -1,                \
                                                  "curl: setopt %s failed: %s", \
@@ -421,6 +427,13 @@ static rest_response_t *rest_req (url_list_t *ul, rest_cmd_t cmd,
                 break;
 
         case REST_POST:
+                // curl max size post field is long
+                if (size > LONG_MAX) {
+                    rest_response_set_result(rr, -1, "post message too large");
+                    curl_slist_free_all(hdrs);
+                    curl_easy_cleanup(curl);
+                    return rr;
+                }
                 do_curl_setopt(curl, CURLOPT_POST, 1);
                 do_curl_setopt(curl, CURLOPT_POSTFIELDS, payload);
                 do_curl_setopt(curl, CURLOPT_POSTFIELDSIZE, size);
@@ -475,7 +488,7 @@ rest_response_t *rest_get (url_list_t *ul, const char *url_path_fmt, ...) {
 
 
 rest_response_t *rest_post (url_list_t *ul,
-                            const void *payload, int size,
+                            const void *payload, size_t size,
                             const char *url_path_fmt, ...) {
         rest_response_t *rr;
         va_list ap;

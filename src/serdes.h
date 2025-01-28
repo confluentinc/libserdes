@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2015-2023 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
  * such as types and error codes.
  */
 #include "serdes-common.h"
-
 
 /* Private types, all access through methods */
 typedef struct serdes_s serdes_t;
@@ -189,7 +188,7 @@ serdes_schema_t *serdes_schema_get (serdes_t *sd, const char *name, int id,
  */
 SERDES_EXPORT
 serdes_schema_t *serdes_schema_add (serdes_t *sd, const char *name, int id,
-                                    const void *definition, int definition_len,
+                                    const void *definition, size_t definition_len,
                                     char *errstr, int errstr_size);
 
 
