@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2015-2023 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 #include "serdes_int.h"
 
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 const char *serdes_err2str (serdes_err_t err) {
         switch (err)

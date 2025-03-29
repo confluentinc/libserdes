@@ -1,6 +1,6 @@
 # libserdes
 
-Copyright(C) 2015-2022 Confluent Inc.
+Copyright(C) 2015-2023 Confluent Inc.
 
  * This software is licensed under the Apache 2.0 license.
 ---------------------------------------------------------------------------
@@ -49,17 +49,36 @@ On Debian/Ubuntu based systems:
  **NOTE: The avro libraries needs to be installed manually or through [Confluent's APT and YUM repositories](http://docs.confluent.io/current/installation.html)**
 
 ## Build
+### Configure script (Linux)
 
     ./configure
     make
     sudo make install
 
+### CMake - Conan
 
-### Documentation
+    mkdir build
+    cd build
+    conan install -pr:b win_x86_64_release -pr:h win_x86_64_release ../conan/conanfile.txt
+    cmake .. --toolchain=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+    cmake -P cmake_install.cmake
+
+profile `win_x86_64_release` is provided as example in `conan` directory.
+
+Build options: 
+
+| Option                            | Description                 | Default |
+| :-------------------------------- | :-------------------------- | :-----: |
+| SERDES_ENABLE_AVRO_C              | Include avro C facilities   | OFF     |
+| SERDES_ENABLE_AVRO_CPP            | Include avro C++ facilities | ON      |
+| SERDES_ENABLE_WITH_EXAMPLE        | Build examples              | OFF     |
+| SERDES_ENABLE_EXAMPLES_LIBRDKAFKA | Include examples with kafka | OFF     |
+
+## Documentation
 
 Full API documentation is available in [serdes.h](src/serdes.h) and [serdescpp.h](src-cpp/serdescpp.h)
 
-### Configuration
+## Configuration
 
 libserdes typically only needs to be configured with a list of URLs
 to the schema registries, all other configuration is optional.

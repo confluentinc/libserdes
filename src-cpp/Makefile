@@ -2,7 +2,7 @@ PKGNAME=	libserdes
 LIBNAME=	libserdes++
 LIBVER=		1
 
-CXXSRCS=	Serdes.cpp
+CXXSRCS=	Serdes.cpp serdes-avro.cpp
 HDRS=		serdescpp.h serdescpp-avro.h
 
 OBJS=		$(CXXSRCS:%.cpp=%.o)

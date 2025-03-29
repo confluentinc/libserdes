@@ -53,7 +53,7 @@ freely, subject to the following restrictions:
 extern "C" {
 #endif
 
-#define __TLS __thread
+#define __TLS _Thread_local
 static __TLS int thrd_is_detached;
 
 

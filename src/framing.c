@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2015-2023 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,13 @@
 
 #include "serdes_int.h"
 
+#include <stdint.h>
+#include <stdio.h>
+#ifdef _WIN32
+#include <winsock.h>
+#else
 #include <arpa/inet.h> /* ntohl/htonl */
-
+#endif
 
 size_t serdes_serializer_framing_size (serdes_t *sd) {
         switch (sd->sd_conf.serializer_framing)
