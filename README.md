@@ -3,6 +3,12 @@
 Copyright(C) 2015-2022 Confluent Inc.
 
  * This software is licensed under the Apache 2.0 license.
+
+> [!WARNING]
+> This repository is no longer being maintained.  For C++ integration
+> with Schema Registry, see 
+> [libschemaregistry](https://github.com/confluentinc/libschemaregistry).
+
 ---------------------------------------------------------------------------
 
 **libserdes** is a schema-based serializer/deserializer C/C++ library with
